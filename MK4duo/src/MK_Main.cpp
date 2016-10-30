@@ -979,6 +979,17 @@ inline void get_serial_commands() {
   } // queue has space, serial has data
 }
 
+#if ENABLED(ETHERNET)
+	inline void get_ethernet_commands() {
+		while (commands_in_queue < BUFSIZE && ethernet_available()) {
+			
+			
+			_enqueuecommand(ethernet_getCommand(),true);
+		}
+
+	}
+#endif 
+
 #if ENABLED(SDSUPPORT)
   inline void get_sdcard_commands() {
     static bool stop_buffering = false,
@@ -1050,6 +1061,9 @@ void get_available_commands() {
   if (drain_injected_commands_P()) return;
 
   get_serial_commands();
+  #if ENABLED(ETHERNET)
+    get_ethernet_commands();
+  #endif
 
   #if ENABLED(SDSUPPORT)
     get_sdcard_commands();
@@ -11303,7 +11317,7 @@ void stop() {
  *    • Z probe sled
  *    • status LEDs
  */
-void setup() {
+void setup() { while (!SerialUSB) ;
   #if MB(ALLIGATOR)
     setup_alligator_board();    // Initialize Alligator Board
   #elif MB(ULTRATRONICS)
@@ -11374,6 +11388,10 @@ void setup() {
     digipot_i2c_init();
   #endif
 
+	#if ENABLED(ETHERNET)
+		ethernet_init();
+  #endif
+
   #if HAS(Z_PROBE_SLED)
     OUT_WRITE(SLED_PIN, LOW); // turn it off
   #endif
@@ -11442,11 +11460,16 @@ void setup() {
  *  - Call LCD update
  */
 void loop() {
+	#if ENABLED(ETHERNET)
+		ethernet_process();
+	#endif
+
   if (commands_in_queue < BUFSIZE) get_available_commands();
 
   #if ENABLED(SDSUPPORT)
     card.checkautostart(false);
   #endif
+
 
   if (commands_in_queue) {
 

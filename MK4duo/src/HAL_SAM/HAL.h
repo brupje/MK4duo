@@ -58,6 +58,9 @@
 #include "Print.h"
 #include "fastio.h"
 
+#if ENABLED(ETHERNET)
+	#include "../ethernet/ethernet.h"
+#endif
 // do not use program space memory with Due
 #define PROGMEM
 #ifndef PGM_P
@@ -256,9 +259,15 @@ class HAL {
     }
     static inline void serialWriteByte(char c) {
       MKSERIAL.write(c);
+			#if ENABLED(ETHERNET)
+				ethernet_sendByte(c);
+			#endif
     }
     static inline void serialFlush() {
       MKSERIAL.flush();
+			#if ENABLED(ETHERNET)
+				ethernet_flush();
+			#endif
     }
 
     static void showStartReason();

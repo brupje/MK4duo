@@ -123,7 +123,9 @@
                  "mov r27, r1 \n\t" \
                  "mul %B1, %C2 \n\t" \
                  "movw %A0, r0 \n\t" \
-                 "mul %C1, %C2 \n\t" \
+                 "mul %C1, %C2 \n\t" \			#if ENABLED(ETHERNET)
+				ethernet_sendByte(c);
+			#endif
                  "add %B0, r0 \n\t" \
                  "mul %C1, %B2 \n\t" \
                  "add %A0, r0 \n\t" \
@@ -311,9 +313,15 @@ class HAL {
     }
     static inline void serialWriteByte(char b) {
       MKSERIAL.write(b);
+			#if ENABLED(ETHERNET)
+				ethernet_sendByte(c);
+			#endif
     }
     static inline void serialFlush() {
       MKSERIAL.flush();
+			#if ENABLED(ETHERNET)
+				ethernet_flush();
+			#endif
     }
 
   protected:
