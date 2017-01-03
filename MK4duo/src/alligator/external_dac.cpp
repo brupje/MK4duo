@@ -28,7 +28,7 @@
 
 #include "../../base.h"
 
-#if MB(ALLIGATOR)
+#if MB(ALLIGATOR) || MB(ALLIGATOR_V3)
 
   #include "external_dac.h"
 
@@ -49,7 +49,7 @@
     digitalWrite(SPI_EEPROM1_CS, HIGH);
     digitalWrite(SPI_EEPROM2_CS, HIGH);
     digitalWrite(SPI_FLASH_CS, HIGH);
-    digitalWrite(SDSS, HIGH);
+    digitalWrite(SS_PIN, HIGH);
     HAL::spiBegin();
 
     //init onboard DAC
@@ -87,9 +87,9 @@
     uint8_t externalDac_buf[2] = {0x10, 0x00};
 
     if(channel > 3)
-      externalDac_buf[0] |= (7 - channel << 6);
+      externalDac_buf[0] |= ((7 - channel) << 6);
     else
-      externalDac_buf[0] |= (3 - channel << 6);
+      externalDac_buf[0] |= ((3 - channel) << 6);
 
     externalDac_buf[0] |= (value>>4);
     externalDac_buf[1] |= (value<<4);
@@ -102,7 +102,7 @@
     digitalWrite(SPI_EEPROM1_CS, HIGH);
     digitalWrite(SPI_EEPROM2_CS, HIGH);
     digitalWrite(SPI_FLASH_CS, HIGH);
-    digitalWrite(SDSS, HIGH);
+    digitalWrite(SS_PIN, HIGH);
 
     if(channel > 3) { // DAC Piggy E1,E2,E3
       digitalWrite(DAC1_SYNC, LOW);

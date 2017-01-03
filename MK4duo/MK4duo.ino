@@ -50,7 +50,8 @@
  * G28 - X Y Z Home all Axis. M for bed manual setting with LCD. B return to back point
  * G29 - Detailed Z-Probe, probes the bed at 3 or more points. Will fail if you haven't homed yet.
    G29   Fyyy Lxxx Rxxx Byyy for customer grid.
- * G30 - Single Z Probe, probes bed at current XY location. - Bed Probe and Delta geometry Autocalibration
+ * G30 - Single Z probe, probes bed at X Y location (defaults to current XY location)
+         and Delta geometry Autocalibration
  * G31 - Dock sled (Z_PROBE_SLED only)
  * G32 - Undock sled (Z_PROBE_SLED only)
  * G60 - Save current position coordinates (all axes, for active extruder).
@@ -67,10 +68,9 @@
  *
  * M0   - Unconditional stop - Wait for user to press a button on the LCD (Only if ULTRA_LCD is enabled)
  * M1   - Same as M0
- * M3   - Put S<value> in laser beam control
- * M4   - Turn on laser beam
- * M5   - Turn off laser beam
- * M11  - Start/Stop printing serial mode
+ * M3   - Put S<value> in laser beam control. (Requires LASERBEAM)
+ * M4   - Turn on laser beam. (Requires LASERBEAM)
+ * M5   - Turn off laser beam. (Requires LASERBEAM)
  * M17  - Enable/Power all stepper motors
  * M18  - Disable all stepper motors; same as M84
  * M20  - List SD card
@@ -90,7 +90,7 @@
  * M34  - Open file and start print
  * M35  - Upload Firmware to Nextion from SD
  * M42  - Change pin status via gcode Use M42 Px Sy to set pin x to value y, when omitting Px the onboard led will be used.
- * M43  - Pins test and debug
+ * M43  - Monitor pins & report changes - report active pins
  * M48  - Measure Z_Probe repeatability. M48 [P # of points] [X position] [Y position] [V_erboseness #] [E_ngage Probe] [L # of legs of travel]
  * M70  - Power consumption sensor calibration
  * M75  - Start the print job timer
@@ -121,7 +121,7 @@
  * M111 - Set debug flags with S<mask>.
  * M112 - Emergency stop
  * M114 - Output current position to serial port
- * M115 - Capabilities string
+ * M115 - Report capabilities. (Extended capabilities requires EXTENDED_CAPABILITIES_REPORT)
  * M117 - Display a message on the controller screen
  * M119 - Output Endstop status to serial port
  * M120 - Enable endstop detection
@@ -136,10 +136,11 @@
  * M142 - Set cooler target temp
  * M145 - Set the heatup state H<hotend> B<bed> F<fan speed> for S<material> (0=PLA, 1=ABS)
  * M149 - Set temperature units
- * M150 - Set BlinkM Color Output R: Red<0-255> U(!): Green<0-255> B: Blue<0-255> over i2c, G for green does not work.
- * M163 - Set a single proportion for a mixing extruder. Requires COLOR_MIXING_EXTRUDER.
- * M164 - Save the mix as a virtual extruder. Requires COLOR_MIXING_EXTRUDER and MIXING_VIRTUAL_TOOLS.
- * M165 - Set the proportions for a mixing extruder. Use parameters ABCDHI to set the mixing factors. Requires COLOR_MIXING_EXTRUDER.
+ * M150 - Set BlinkM Color Output or RGB LED R: Red<0-255> U(!): Green<0-255> B: Blue<0-255> over i2c, G for green does not work.
+ * M155 - Auto-report temperatures with interval of S<seconds>. (Requires AUTO_REPORT_TEMPERATURES)
+ * M163 - Set a single proportion for a mixing extruder. (Requires MIXING_EXTRUDER)
+ * M164 - Save the mix as a virtual extruder. (Requires MIXING_EXTRUDER and MIXING_VIRTUAL_TOOLS)
+ * M165 - Set the proportions for a mixing extruder. Use parameters ABCDHI to set the mixing factors. (Requires MIXING_EXTRUDER)
  * M190 - Sxxx Wait for bed current temp to reach target temp. Waits only when heating
  *        Rxxx Wait for bed current temp to reach target temp. Waits when heating and cooling
  * M191 - Sxxx Wait for chamber current temp to reach target temp. Waits only when heating
@@ -171,8 +172,13 @@
  * M304 - Set hot bed PID parameters P I and D
  * M305 - Set hot chamber PID parameters P I and D
  * M306 - Set cooler PID parameters P I and D
+ * M320 - Enable/Disable S1=enable S0=disable, V[bool] Print the leveling grid, Z<height> for leveling fade height (Requires ENABLE_LEVELING_FADE_HEIGHT)
+ * M321 - Set a single Auto Bed Leveling Z coordinate - X<gridx> Y<gridy> Z<level val> S<level add>
+ * M322 - Reset Auto Bed Leveling matrix
+ * M323 - Set Level bilinear manual - X<gridx> Y<gridy> Z<level val> S<level add>
  * M350 - Set microstepping mode.
  * M351 - Toggle MS1 MS2 pins directly.
+ * M355 - Turn case lights on/off
  * M380 - Activate solenoid on active extruder
  * M381 - Disable all solenoids
  * M400 - Finish all moves
@@ -184,7 +190,8 @@
  * M407 - Display measured filament diameter
  * M408 - Report JSON-style response
  * M410 - Quickstop. Abort all the planned moves
- * M420 - Enable/Disable Leveling (with current values) S1=enable S0=disable (Requires MESH_BED_LEVELING or ABL)
+ * M420 - Enable/Disable Mesh Bed Leveling (with current values) S1=enable S0=disable (Requires MESH_BED_LEVELING)
+ *        Z<height> for leveling fade height (Requires ENABLE_LEVELING_FADE_HEIGHT)
  * M421 - Set a single Mesh Bed Leveling Z coordinate. M421 X<mm> Y<mm> Z<mm>' or 'M421 I<xindex> J<yindex> Z<mm>
  * M428 - Set the home_offset logically based on the current_position
  * M500 - Store parameters in EEPROM
@@ -192,6 +199,9 @@
  * M502 - Revert to the default "factory settings". You still need to store them in EEPROM afterwards if you want to.
  * M503 - Print the current settings (from memory not from EEPROM). Use S0 to leave off headings.
  * M522 - Read or Write on card. M522 T<extruders> R<read> or W<write> L<list>
+ * M530 - Enables explicit printing mode (S1) or disables it (S0). L can set layer count
+ * M531 - filename - Define filename being printed
+ * M532 - X<percent> L<curLayer> - update current print state progress (X=0..100) and layer L
  * M540 - Use S[0|1] to enable or disable the stop print on endstop hit (requires ABORT_ON_ENDSTOP_HIT_FEATURE_ENABLED)
  * M595 - Set hotend AD595 O<offset> and S<gain>
  * M600 - Pause for filament change X[pos] Y[pos] Z[relative lift] E[initial retract] L[later retract distance for removal]
@@ -211,6 +221,8 @@
  * ************* SCARA End ***************
  *
  * M928 - Start SD logging (M928 filename.g) - ended by M29
+ * M995 - X Y Z Set origin for graphic in NEXTION
+ * M996 - S<scale> Set scale for graphic in NEXTION
  * M997 - NPR2 Color rotate
  * M999 - Restart after being stopped by error
  *

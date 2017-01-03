@@ -29,6 +29,7 @@
  * - Core settings
  * - Endstop pullup resistors
  * - Endstops logic
+ * - Endstop Interrupts Feature
  * - Z probe Options
  * - Endstops min or max
  * - Min Z height for homing
@@ -40,6 +41,7 @@
  * - Axis relative mode
  * - Mesh Bed Leveling (MBL)
  * - Auto Bed Leveling (ABL)
+ * - Leveling Fade Height (MBL or ABL)
  * - Safe Z homing
  * - Manual home positions
  * - Axis steps per unit
@@ -75,21 +77,21 @@
  ************************************* Core settings *************************************
  *****************************************************************************************
  * This define the moltiplicator axis from X to Y or Z in                                *
- * COREXY - COREYX or COREXZ - COREZX                                                    *
+ * COREXY - COREYX or COREXZ - COREZX or COREYZ - COREZY                                 *
  * Example:                                                                              *
- * COREXY set COREX_YZ_FACTOR 1                                                          *
+ * COREXY set CORE_FACTOR 1                                                              *
  * The result is:                                                                        *
- * X = dX + COREX_YZ_FACTOR * dY = dX + 1 * dY = dX + dY                                 *
- * Y = dX - COREX_YZ_FACTOR * dY = dX - 1 * dY = dX - dY                                 *
+ * X = dX + CORE_FACTOR * dY = dX + 1 * dY = dX + dY                                     *
+ * Y = dX - CORE_FACTOR * dY = dX - 1 * dY = dX - dY                                     *
  * Z = dZ                                                                                *
  *                                                                                       *
- * COREXZ set COREX_YZ_FACTOR -3                                                         *
+ * COREXZ set CORE_FACTOR 3                                                              *
  * The result is:                                                                        *
- * X = dX + COREX_YZ_FACTOR * dZ = dX + -3 * dZ = dX - 3dZ                               *
+ * X = dX + CORE_FACTOR * dZ = dX + 3 * dZ = dX + 3dZ                                    *
  * Y = dY                                                                                *
- * Z = dX - COREX_YZ_FACTOR * dZ = dX - -3 * dZ = dX + 3dZ                               *
+ * Z = dX - CORE_FACTOR * dZ = dX - 3 * dZ = dX - 3dZ                                    *
 ******************************************************************************************/
-#define COREX_YZ_FACTOR 1
+#define CORE_FACTOR 1
 /*****************************************************************************************/
 
 
@@ -135,8 +137,20 @@
 #define Y_MAX_ENDSTOP_LOGIC   false   // set to true to invert the logic of the endstop.
 #define Z_MAX_ENDSTOP_LOGIC   false   // set to true to invert the logic of the endstop.
 #define Z2_MAX_ENDSTOP_LOGIC  false   // set to true to invert the logic of the endstop.
-#define Z_PROBE_ENDSTOP_LOGIC false   // set to true to invert the logic of the endstop.
+#define Z_PROBE_ENDSTOP_LOGIC false   // set to true to invert the logic of the probe.
 #define E_MIN_ENDSTOP_LOGIC   false   // set to true to invert the logic of the endstop.
+/*****************************************************************************************/
+
+
+/*****************************************************************************************
+ ***************************** Endstop interrupts feature ********************************
+ *****************************************************************************************
+ *                                                                                       *
+ * Enable this feature if all enabled endstop pins are interrupt-capable.                *
+ * This will remove the need to poll the interrupt pins, saving many CPU cycles.         *
+ *                                                                                       *
+ *****************************************************************************************/
+//#define ENDSTOP_INTERRUPTS_FEATURE
 /*****************************************************************************************/
 
 
@@ -214,15 +228,11 @@
 // Enable Z Probe Repeatability test to see how accurate your probe is
 //#define Z_MIN_PROBE_REPEATABILITY_TEST
 
-//
 // Probe Raise options provide clearance for the probe to deploy, stow, and travel.
-//
 #define Z_PROBE_DEPLOY_HEIGHT 15  // Z position for the probe to deploy/stow
 #define Z_PROBE_BETWEEN_HEIGHT 5  // Z position for travel between points
 
-//
 // For M666 give a range for adjusting the Z probe offset
-//
 #define Z_PROBE_OFFSET_RANGE_MIN -50
 #define Z_PROBE_OFFSET_RANGE_MAX  50
 /*****************************************************************************************/
@@ -247,7 +257,7 @@
  *****************************************************************************************
  *                                                                                       *
  * (in mm) Minimal z height before homing (G28) for Z clearance above the bed, clamps,   *
- * Be sure you have this distance over your Z_MAX_POS in case.                           *
+ * Be sure you have this distance over your Z MAX POS in case.                           *
  *                                                                                       *
  *****************************************************************************************/
 #define MIN_Z_HEIGHT_FOR_HOMING   0
@@ -266,7 +276,7 @@
 #define X_ENABLE_ON 0
 #define Y_ENABLE_ON 0
 #define Z_ENABLE_ON 0
-#define E_ENABLE_ON 0      // For all extruder
+#define E_ENABLE_ON 0
 /*****************************************************************************************/
 
 
@@ -315,7 +325,7 @@
 #define DISABLE_X false
 #define DISABLE_Y false
 #define DISABLE_Z false
-#define DISABLE_E false      // For all extruder
+#define DISABLE_E false
 // Disable only inactive extruder and keep active extruder enabled
 //#define DISABLE_INACTIVE_EXTRUDER
 /*****************************************************************************************/
@@ -414,14 +424,12 @@
 //#define AUTO_BED_LEVELING_LINEAR
 //#define AUTO_BED_LEVELING_BILINEAR
 
-/**
- * Enable detailed logging of G28, G29, G30, M48, etc.
- * Turn on with the command 'M111 S32'.
- * NOTE: Requires a lot of PROGMEM!
- */
+// Enable detailed logging of G28, G29, G30, M48, etc.
+// Turn on with the command 'M111 S32'.
+// NOTE: Requires a lot of PROGMEM!
 //#define DEBUG_LEVELING_FEATURE
 
-/** START AUTO_BED_LEVELING_LINEAR AUTO_BED_LEVELING_BILINEAR **/
+/** START AUTO_BED_LEVELING_LINEAR or AUTO_BED_LEVELING_BILINEAR **/
 // Set the number of grid points per dimension
 #define ABL_GRID_POINTS_X 3
 #define ABL_GRID_POINTS_Y 3
@@ -437,7 +445,13 @@
 
 // Probe along the Y axis, advancing X after each column
 //#define PROBE_Y_FIRST
-/** END AUTO_BED_LEVELING_LINEAR AUTO_BED_LEVELING_BILINEAR **/
+
+// Experimental Subdivision of the grid by Catmull-Rom method.
+// Synthesizes intermediate points to produce a more detailed mesh.
+//#define ABL_BILINEAR_SUBDIVISION
+// Number of subdivisions between probe points
+#define BILINEAR_SUBDIVISIONS 3
+/** END AUTO_BED_LEVELING_LINEAR or AUTO_BED_LEVELING_BILINEAR **/
 
 /** START AUTO_BED_LEVELING_3POINT **/
 // 3 arbitrary points to probe.
@@ -450,25 +464,37 @@
 #define ABL_PROBE_PT_3_Y 15
 /** END AUTO_BED_LEVELING_3POINT **/
 
-/**
- * Commands to execute at the end of G29 probing.
- * Useful to retract or move the Z probe out of the way.
- */
+// Commands to execute at the end of G29 probing.
+// Useful to retract or move the Z probe out of the way.
 //#define Z_PROBE_END_SCRIPT "G1 Z10 F8000\nG1 X10 Y10\nG1 Z0.5"
+/*****************************************************************************************/
+
+
+/*****************************************************************************************
+ ************************** Leveling Fade Height (MBL or ABL) ****************************
+ *****************************************************************************************
+ *                                                                                       *
+ * Gradually reduce leveling correction until a set height is reached,                   *
+ * at which point movement will be level to the machine's XY plane.                      *
+ * The height can be set with M420 Z<height> for MBL or M320 Z<height> for ABL           *
+ * ONLY FOR LEVELING BILINEAR OR MESH BED LEVELING                                       *
+ *                                                                                       *
+ *****************************************************************************************/
+//#define ENABLE_LEVELING_FADE_HEIGHT
 /*****************************************************************************************/
 
 
 /*****************************************************************************************
  ******************************** Manual home positions **********************************
  *****************************************************************************************/
-// The position of the homing switches
-//#define MANUAL_HOME_POSITIONS   // If defined, MANUAL_*_HOME_POS below will be used
-//#define BED_CENTER_AT_0_0       // If defined, the center of the bed is at (X=0, Y=0)
+// The center of the bed is at (X=0, Y=0)
+//#define BED_CENTER_AT_0_0
 
-//Manual homing switch locations:
-#define MANUAL_X_HOME_POS 0
-#define MANUAL_Y_HOME_POS 0
-#define MANUAL_Z_HOME_POS 0
+// Manually set the home position. Leave these undefined for automatic settings.
+// For DELTA this is the top-center of the Cartesian print volume.
+//#define MANUAL_X_HOME_POS 0
+//#define MANUAL_Y_HOME_POS 0
+//#define MANUAL_Z_HOME_POS 0 // Distance between the nozzle to printbed after homing
 /*****************************************************************************************/
 
 
@@ -531,7 +557,8 @@
  ************************************* Axis jerk *****************************************
  *****************************************************************************************
  *                                                                                       *
- * Defult Jerk (mm/s)                                                                    *
+ * Default Jerk (mm/s)                                                                   *
+ * Override with M205 X Y Z E                                                            *
  *                                                                                       *
  * "Jerk" specifies the minimum speed change that requires acceleration.                 *
  * When changing speed and direction, if the difference is less than the                 *

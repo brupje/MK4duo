@@ -26,18 +26,19 @@
 #include "Arduino.h"
 #include "pins_arduino.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
 
-#ifndef __SAM3X8E__
+#ifdef ARDUINO_ARCH_AVR
   #include <avr/pgmspace.h>
+  #include <avr/eeprom.h>
   #include <avr/interrupt.h>
 #endif
 
 #include "src/macros.h"
-#include "src/types.h"
 #include "Boards.h"
 #include "src/mechanics.h"
 
@@ -50,18 +51,14 @@
 
   #if MECH(CARTESIAN)
     #include "Configuration_Cartesian.h"
-  #elif MECH(COREXY)
-    #include "Configuration_Core.h"
-  #elif MECH(COREYX)
-    #include "Configuration_Core.h"
-  #elif MECH(COREXZ)
-    #include "Configuration_Core.h"
-  #elif MECH(COREZX)
+  #elif IS_CORE
     #include "Configuration_Core.h"
   #elif MECH(DELTA)
     #include "Configuration_Delta.h"
-  #elif MECH(MORGAN_SCARA) || MECH(MAKERARM_SCARA)
+  #elif IS_SCARA
     #include "Configuration_Scara.h"
+  #elif MECH(MUVE3D)
+    #include "Configuration_Muve3D.h"
   #endif
 
   #include "Configuration_Temperature.h"
@@ -73,26 +70,13 @@
 
 #if ENABLED(LASERBEAM)
   #include "Configuration_Laser.h"
-  #if ENABLED(LASER_RASTER)
-    #include "src/laser/base64/base64.h"
-  #endif
-  #include "src/laser/laser.h"
 #endif
 
 #include "src/conditionals_pre.h"
 #include "src/pins.h"
 #include "src/conditionals_post.h"
-
 #include "src/sanitycheck.h"
-
-#ifdef __SAM3X8E__
-  #include "src/HAL_SAM/HAL.h"
-  #include "src/HAL_SAM/communication.h"
-#else
-  #include "src/HAL_AVR/HAL.h"
-  #include "src/HAL_AVR/communication.h"
-#endif
-
+#include "src/HAL/HAL.h"
 #include "src/enum.h"
 
 #if HAS(ABL)
@@ -105,12 +89,21 @@
   #include "src/mbl/mesh_bed_leveling.h"
 #endif
 
-#include "Configuration_Store.h"
+#if MECH(DELTA)
+  #include "src/motion/delta_parameters.h"
+#endif
 
+#if ENABLED(LASERBEAM)
+  #if ENABLED(LASER_RASTER)
+    #include "src/laser/base64/base64.h"
+  #endif
+  #include "src/laser/laser.h"
+#endif
+  
+#include "src/eeprom/eeprom.h"
 #include "src/printcounter/duration_t.h"
 #include "src/printcounter/printcounter.h"
 #include "src/MK_Main.h"
-#include "src/nozzle/nozzle.h"
 #include "src/planner/planner.h"
 #include "src/endstop/endstops.h"
 #include "src/motion/stepper.h"
@@ -123,18 +116,16 @@
 #include "src/sd/cardreader.h"
 #include "src/servo/servo.h"
 #include "src/watchdog/watchdog.h"
-#include "src/blinkm/blinkm.h"
+#include "src/utility/nozzle.h"
+#include "src/utility/blinkm.h"
+#include "src/utility/matrix.h"
 
-#if MB(ALLIGATOR)
+#if MB(ALLIGATOR) || MB(ALLIGATOR_V3)
   #include "src/alligator/external_dac.h"
 #endif
 
 #if HAS(DIGIPOTSS)
   #include <SPI.h>
-#endif
-
-#if ENABLED(FIRMWARE_TEST)
-  #include "src/fwtest/firmware_test.h"
 #endif
 
 #if ENABLED(RFID_MODULE)

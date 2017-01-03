@@ -48,7 +48,7 @@
   #include "nextion_lib/Nextion.h"
 
   bool NextionON                    = false;
-  uint8_t NextionPage               = 0,
+  uint8_t PageID                    = 0,
           lcd_status_message_level  = 0;
   uint16_t slidermaxval             = 20;
   char buffer[100]                  = { 0 };
@@ -61,7 +61,8 @@
   #endif
 
   #if ENABLED(NEXTION_GFX)
-    GFX gfx = GFX(200, 154, 20, 27);
+    //GFX gfx = GFX(20, 27, 200, 154);
+    GFX gfx = GFX(1, 24, 250, 155);
   #endif
 
   /**
@@ -102,24 +103,32 @@
    * Nextion component for page:printer
    *******************************************************************
    */
-  NexText LedStatus     = NexText       (2,   1,  "t0");
-  NexText LedCoord1     = NexText       (2,   2,  "t1");
-  NexText Hotend0       = NexText       (2,   14, "t2");
-  NexText Hotend1       = NexText       (2,   15, "t3");
-  NexText Hotend2       = NexText       (2,   16, "t4");
-  NexText Fanspeed      = NexText       (2,   18, "t5");
-  NexPicture Fanpic     = NexPicture    (2,   4,  "p1");
-  NexPicture NStop      = NexPicture    (2,   19, "p2");
-  NexPicture NPlay      = NexPicture    (2,   20, "p3");
-  NexVariable Hotend    = NexVariable   (2,   5,  "he");
-  NexVariable Bed       = NexVariable   (2,   6,  "bed");
-  NexVariable Fan       = NexVariable   (2,   7,  "fan");
-  NexVariable SD        = NexVariable   (2,   10, "sd");
-  NexVariable RFID      = NexVariable   (2,   11, "rfid");
-  NexVariable VSpeed    = NexVariable   (2,   12, "vspeed");
-  NexVariable Extruder  = NexVariable   (2,   13, "extruder");
-  NexTimer Fantimer     = NexTimer      (2,   8,  "tm0");
-  NexProgressBar sdbar  = NexProgressBar(2,   9,  "j0");
+  NexVariable Hotend00  = NexVariable   (2,   2,  "he00");
+  NexVariable Hotend01  = NexVariable   (2,   3,  "he01");
+  NexVariable Hotend10  = NexVariable   (2,   4,  "he10");
+  NexVariable Hotend11  = NexVariable   (2,   5,  "he11");
+  NexVariable Bed0      = NexVariable   (2,   6,  "bed0");
+  NexVariable Bed1      = NexVariable   (2,   7,  "bed1");
+  NexVariable Chamber0  = NexVariable   (2,   8,  "cha0");
+  NexVariable Chamber1  = NexVariable   (2,   9,  "cha1");
+  NexVariable Extruder  = NexVariable   (2,   10, "extruder");
+  NexVariable Fan       = NexVariable   (2,   11, "fan");
+  NexVariable SD        = NexVariable   (2,   12, "sd");
+  NexVariable RFID      = NexVariable   (2,   13, "rfid");
+  NexVariable Language  = NexVariable   (2,   14, "lang");
+  NexVariable VSpeed    = NexVariable   (2,   15, "vspeed");
+  NexTimer Fantimer     = NexTimer      (2,   16, "tm0");
+  NexPicture Fanpic     = NexPicture    (2,   19, "p1");
+  NexPicture NStop      = NexPicture    (2,   20, "p2");
+  NexPicture NPlay      = NexPicture    (2,   21, "p3");
+  NexText LedStatus     = NexText       (2,   24, "t0");
+  NexText LedCoord1     = NexText       (2,   25, "t1");
+  NexText Hotend0       = NexText       (2,   26, "t2");
+  NexText Hotend1       = NexText       (2,   27, "t3");
+  NexText Hotend2       = NexText       (2,   28, "t4");
+  NexText Fanspeed      = NexText       (2,   29, "t5");
+  NexWaveform Wavetemp  = NexWaveform   (2,   30, "s0");
+  NexProgressBar sdbar  = NexProgressBar(2,   31, "j0");
 
   /**
    *******************************************************************
@@ -210,9 +219,9 @@
    * Nextion component for page:Temp
    *******************************************************************
    */
-  NexText tset0         = NexText       (10,  1,  "set0");
-  NexVariable tset1     = NexVariable   (10,  2,  "set1");
-  NexPicture tset       = NexPicture    (10,  3,  "p5");
+  NexText tset          = NexText       (10,  1,  "t0");
+  NexVariable theater   = NexVariable   (10,  2,  "va0");
+  NexPicture tenter     = NexPicture    (10,  3,  "p5");
   NexPicture tup        = NexPicture    (10,  6,  "p8");
   NexPicture tdown      = NexPicture    (10,  7,  "p9");
 
@@ -229,8 +238,13 @@
    * Nextion component for page:Yesno
    *******************************************************************
    */
-  NexHotspot YesNo          = NexHotspot    (12,  2,  "m0");
-  NexVariable Vyes          = NexVariable   (12,  4,  "va0");
+  NexVariable Vyes          = NexVariable   (12,  2,  "va0");
+  NexText Riga0             = NexText       (12,  4,  "t0");
+  NexText Riga1             = NexText       (12,  5,  "t1");
+  NexText Riga2             = NexText       (12,  6,  "t2");
+  NexText Riga3             = NexText       (12,  7,  "t3");
+  NexPicture Yes            = NexPicture    (12,  8,  "p1");
+  NexPicture No             = NexPicture    (12,  9,  "p2");
 
   NexTouch *nex_listen_list[] =
   {
@@ -258,19 +272,29 @@
     &Rfid0, &Rfid1, &Rfid2, &Rfid3, &Rfid4, &Rfid5,
 
     // Page 10 touch listen
-    &tset, &tup, &tdown,
+    &tenter, &tup, &tdown,
 
     // Page 12 touch listen
-    &YesNo,
+    &Yes,
 
     NULL
   };
 
-  NexText *hotend_list[] =
+  NexVariable *heater_list0[] =
   {
-    &Hotend0,
-    &Hotend1,
-    &Hotend2,
+    &Hotend00,
+    &Hotend10,
+    &Bed0,
+    &Chamber0,
+    NULL
+  };
+
+  NexVariable *heater_list1[] =
+  {
+    &Hotend01,
+    &Hotend11,
+    &Bed1,
+    &Chamber1,
     NULL
   };
 
@@ -298,12 +322,18 @@
 
   void setpagePrinter() {
 
-    Hotend.setValue(HOTENDS, "printer");
-    Extruder.setValue(EXTRUDERS, "printer");
+    #if HOTENDS > 0
+      Hotend00.setValue(1, "printer");
+      #if HOTENDS > 1
+        Hotend10.setValue(1, "printer");
+      #endif
+    #endif
 
     #if HAS(TEMP_BED)
-      Bed.setValue(1, "printer");
+      Bed0.setValue(1, "printer");
     #endif
+
+    Extruder.setValue(EXTRUDERS, "printer");
 
     #if ENABLED(SDSUPPORT)
       card.mount();
@@ -323,6 +353,10 @@
       RFID.setValue(1, "printer");
     #endif
 
+    #define LANGUAGE_STRING_(M) STRINGIFY_(M)
+    #define LANGUAGE_STRING(M) LANGUAGE_STRING_(M)
+    #define NEXTION_LANGUAGE LANGUAGE_STRING(LCD_LANGUAGE)
+    Language.setText(NEXTION_LANGUAGE, "printer");
   }
 
   #if ENABLED(SDSUPPORT)
@@ -354,10 +388,10 @@
       uint32_t i = 0;
       card.getWorkDirName();
 
-      if (fullName[0] != '/') {
+      if (card.fileName[0] != '/') {
         Folderup.setShow();
         Folderup.attachPop(sdfolderUpPopCallback);
-        sdfolder.setText(fullName);
+        sdfolder.setText(card.fileName);
       } else {
         Folderup.detachPop();
         Folderup.setHide();
@@ -368,7 +402,7 @@
         i = row + number;
         if (i < fileCnt) {
           card.getfilename(i);
-          printrowsd(row, card.filenameIsDir, fullName);
+          printrowsd(row, card.filenameIsDir, card.fileName);
         } else {
           printrowsd(row, false, "");
         }
@@ -377,12 +411,7 @@
     }
 
     static void menu_action_sdfile(const char* filename) {
-      char cmd[30];
-      char* c;
-      sprintf_P(cmd, PSTR("M23 %s"), filename);
-      for(c = &cmd[4]; *c; c++) *c = tolower(*c);
-      enqueue_and_echo_command(cmd);
-      enqueue_and_echo_commands_P(PSTR("M24"));
+      card.openAndPrintFile(filename);
       Pprinter.show();
     }
 
@@ -489,6 +518,160 @@
 
   #endif
 
+  #if ENABLED(FILAMENT_CHANGE_FEATURE)
+
+    static void lcd_filament_change_resume_print() {
+      filament_change_menu_response = FILAMENT_CHANGE_RESPONSE_RESUME_PRINT;
+      Pprinter.show();
+    }
+
+    static void lcd_filament_change_extrude_more() {
+      filament_change_menu_response = FILAMENT_CHANGE_RESPONSE_EXTRUDE_MORE;
+    }
+
+    static void lcd_filament_change_option_menu() {
+      Vyes.setValue(5, "yesno");
+      Pyesno.show();
+      Riga0.setText(MSG_FILAMENT_CHANGE_OPTION_HEADER);
+      Riga1.setText(MSG_FILAMENT_CHANGE_OPTION_RESUME);
+      Riga2.setText("");
+      Riga3.setText("");
+    }
+
+    static void lcd_filament_change_init_message() {
+      Vyes.setValue(0, "yesno");
+      Pyesno.show();
+      Riga0.setText(MSG_FILAMENT_CHANGE_HEADER);
+      Riga1.setText(MSG_FILAMENT_CHANGE_INIT_1);
+      #ifdef MSG_FILAMENT_CHANGE_INIT_2
+        Riga2.setText(MSG_FILAMENT_CHANGE_INIT_2);
+      #else
+        Riga2.setText("");
+      #endif
+      #ifdef MSG_FILAMENT_CHANGE_INIT_3
+        Riga3.setText(MSG_FILAMENT_CHANGE_INIT_3);
+      #else
+        Riga3.setText("");
+      #endif
+    }
+
+    static void lcd_filament_change_unload_message() {
+      Vyes.setValue(0, "yesno");
+      Pyesno.show();
+      Riga0.setText(MSG_FILAMENT_CHANGE_HEADER);
+      Riga1.setText(MSG_FILAMENT_CHANGE_UNLOAD_1);
+      #ifdef MSG_FILAMENT_CHANGE_UNLOAD_2
+        Riga2.setText(MSG_FILAMENT_CHANGE_UNLOAD_2);
+      #else
+        Riga2.setText("");
+      #endif
+      #ifdef MSG_FILAMENT_CHANGE_UNLOAD_3
+        Riga3.setText(MSG_FILAMENT_CHANGE_UNLOAD_3);
+      #else
+        Riga3.setText("");
+      #endif
+    }
+
+    static void lcd_filament_change_insert_message() {
+      Vyes.setValue(4, "yesno");
+      Pyesno.show();
+      Riga0.setText(MSG_FILAMENT_CHANGE_HEADER);
+      Riga1.setText(MSG_FILAMENT_CHANGE_INSERT_1);
+      #ifdef MSG_FILAMENT_CHANGE_INSERT_2
+        Riga2.setText(MSG_FILAMENT_CHANGE_INSERT_2);
+      #else
+        Riga2.setText("");
+      #endif
+      #ifdef MSG_FILAMENT_CHANGE_INSERT_3
+        Riga3.setText(MSG_FILAMENT_CHANGE_INSERT_3);
+      #else
+        Riga3.setText("");
+      #endif
+    }
+
+    static void lcd_filament_change_load_message() {
+      Vyes.setValue(0, "yesno");
+      Pyesno.show();
+      Riga0.setText(MSG_FILAMENT_CHANGE_HEADER);
+      Riga1.setText(MSG_FILAMENT_CHANGE_LOAD_1);
+      #ifdef MSG_FILAMENT_CHANGE_LOAD_2
+        Riga2.setText(MSG_FILAMENT_CHANGE_LOAD_2);
+      #else
+        Riga2.setText("");
+      #endif
+      #ifdef MSG_FILAMENT_CHANGE_LOAD_3
+        Riga3.setText(MSG_FILAMENT_CHANGE_LOAD_3);
+      #else
+        Riga3.setText("");
+      #endif
+    }
+
+    static void lcd_filament_change_extrude_message() {
+      Vyes.setValue(0, "yesno");
+      Pyesno.show();
+      Riga0.setText(MSG_FILAMENT_CHANGE_HEADER);
+      Riga1.setText(MSG_FILAMENT_CHANGE_EXTRUDE_1);
+      #ifdef MSG_FILAMENT_CHANGE_EXTRUDE_2
+        Riga2.setText(MSG_FILAMENT_CHANGE_EXTRUDE_2);
+      #else
+        Riga2.setText("");
+      #endif
+      #ifdef MSG_FILAMENT_CHANGE_EXTRUDE_3
+        Riga3.setText(MSG_FILAMENT_CHANGE_EXTRUDE_3);
+      #else
+        Riga3.setText("");
+      #endif
+    }
+
+    static void lcd_filament_change_resume_message() {
+      Vyes.setValue(0, "yesno");
+      Pyesno.show();
+      Riga0.setText(MSG_FILAMENT_CHANGE_HEADER);
+      Riga1.setText(MSG_FILAMENT_CHANGE_RESUME_1);
+      #ifdef MSG_FILAMENT_CHANGE_RESUME_2
+        Riga2.setText(MSG_FILAMENT_CHANGE_RESUME_2);
+      #else
+        Riga2.setText("");
+      #endif
+      #ifdef MSG_FILAMENT_CHANGE_RESUME_3
+        Riga3.setText(MSG_FILAMENT_CHANGE_RESUME_3);
+      #else
+        Riga2.setText("");
+      #endif
+    }
+
+    void lcd_filament_change_show_message(FilamentChangeMessage message) {
+      switch (message) {
+        case FILAMENT_CHANGE_MESSAGE_INIT:
+          lcd_filament_change_init_message();
+          break;
+        case FILAMENT_CHANGE_MESSAGE_UNLOAD:
+          lcd_filament_change_unload_message();
+          break;
+        case FILAMENT_CHANGE_MESSAGE_INSERT:
+          lcd_filament_change_insert_message();
+          break;
+        case FILAMENT_CHANGE_MESSAGE_LOAD:
+          lcd_filament_change_load_message();
+          break;
+        case FILAMENT_CHANGE_MESSAGE_EXTRUDE:
+          lcd_filament_change_extrude_message();
+          break;
+        case FILAMENT_CHANGE_MESSAGE_OPTION:
+          filament_change_menu_response = FILAMENT_CHANGE_RESPONSE_WAIT_FOR;
+          lcd_filament_change_option_menu();
+          break;
+        case FILAMENT_CHANGE_MESSAGE_RESUME:
+          lcd_filament_change_resume_message();
+          break;
+        case FILAMENT_CHANGE_MESSAGE_STATUS:
+          Pprinter.show();
+          break;
+      }
+    }
+
+  #endif // FILAMENT_CHANGE_FEATURE
+
   #if ENABLED(RFID_MODULE)
     void rfidPopCallback(void *ptr) {
       ZERO(buffer);
@@ -516,7 +699,7 @@
         temp += "W";
 
       temp.toCharArray(buffer, sizeof(buffer));
-      enqueue_and_echo_commands_P(buffer);
+      enqueue_and_echo_command(buffer);
     }
 
     void rfid_setText(const char* message, uint32_t color /* = 65535 */) {
@@ -534,13 +717,13 @@
       if (thermalManager.degTargetHotend(0) != 0) {
         itoa(thermalManager.degTargetHotend(0), buffer, 10);
       }
-      tset1.setText("M104 T0 S");
+      theater.setValue(0);
     }
     if (ptr == &Hotend1) {
       if (thermalManager.degTargetHotend(1) != 0) {
         itoa(thermalManager.degTargetHotend(1), buffer, 10);
       }
-      tset1.setText("M104 T1 S");
+      theater.setValue(1);
     }
 
     #if HAS_TEMP_2
@@ -548,27 +731,26 @@
         if (thermalManager.degTargetHotend(2) != 0) {
           itoa(thermalManager.degTargetHotend(2), buffer, 10);
         }
-        tset1.setText("M104 T2 S");
+        theater.setValue(2);
       }
     #elif HAS_TEMP_BED
       if (ptr == &Hotend2) {
         if (thermalManager.degTargetBed() != 0) {
           itoa(thermalManager.degTargetBed(), buffer, 10);
         }
-        tset1.setText("M140 S");
+        theater.setValue(4);
       }
     #endif
 
-    tset0.setText(buffer);
+    tset.setText(buffer);
   }
 
   void settempPopCallback(void *ptr) {
-    uint16_t number;
 
     ZERO(buffer);
-    tset0.getText(buffer, sizeof(buffer));
+    tset.getText(buffer, sizeof(buffer));
 
-    number = atoi(buffer);
+    uint16_t number = atoi(buffer);
 
     if (ptr == &tup) number += 1;
     if (ptr == &tdown) number -= 1;
@@ -576,23 +758,30 @@
     ZERO(buffer);
     itoa(number, buffer, 10);
 
-    tset0.setText(buffer);
+    tset.setText(buffer);
   }
 
   void sethotPopCallback(void *ptr) {
+    uint32_t Heater;
     char temp[5] = { 0 };
-    ZERO(buffer);
-    tset0.getText(temp, sizeof(temp));
-    tset1.getText(buffer, sizeof(buffer));
-    strcat(buffer, temp);
-    enqueue_and_echo_commands_P(buffer);
+
+    tset.getText(temp, sizeof(temp));
+    uint16_t temperature = atoi(temp);
+
+    theater.getValue(&Heater);
+
+    if (Heater == 4)
+      thermalManager.setTargetBed(temperature);
+    else
+      thermalManager.setTargetHotend(temperature, (uint8_t)Heater);
+
     Pprinter.show();
   }
 
   void setgcodePopCallback(void *ptr) {
     ZERO(buffer);
     Tgcode.getText(buffer, sizeof(buffer));
-    enqueue_and_echo_commands_P(buffer);
+    enqueue_and_echo_command(buffer);
   }
 
   void setfanPopCallback(void *ptr) {
@@ -618,13 +807,13 @@
       itoa(new_extruder, temp, 2);
       strcat(buffer, "T");
       strcat(buffer, temp);
-      enqueue_and_echo_commands_P(buffer);
+      enqueue_and_echo_command(buffer);
     #endif
 
     ZERO(buffer);
     movecmd.getText(buffer, sizeof(buffer));
     enqueue_and_echo_commands_P(PSTR("G91"));
-    enqueue_and_echo_commands_P(buffer);
+    enqueue_and_echo_command(buffer);
     enqueue_and_echo_commands_P(PSTR("G90"));
 
     #if EXTRUDERS > 1
@@ -632,7 +821,7 @@
       itoa(temp_extruder, temp, 2);
       strcat(buffer, "T");
       strcat(buffer, temp);
-      enqueue_and_echo_commands_P(buffer);
+      enqueue_and_echo_command(buffer);
     #endif
   }
 
@@ -640,16 +829,22 @@
     enqueue_and_echo_commands_P(PSTR("M84"));
   }
 
-  void YesNoPopCallback(void *ptr) {
+  void YesPopCallback(void *ptr) {
     static uint32_t icon = 0;
     Vyes.getValue(&icon);
     switch(icon) {
       #if ENABLED(SDSUPPORT)
         case 1:
-        case 2:
+        case 2: // StopPrint
           StopPrint(icon == 2); Pprinter.show(); break;
-        case 3:
+        case 3: // Stop & Save
           UploadNewFirmware(); break;
+      #endif
+      #if ENABLED(FILAMENT_CHANGE_FEATURE)
+        case 4: // Filament click
+          wait_for_user = false; break;
+        case 5: // Filament resume print
+          lcd_filament_change_resume_print(); break;
       #endif
     }
   }
@@ -671,11 +866,11 @@
       SERIAL_EM("Nextion LCD connected!");
 
       #if ENABLED(NEXTION_GFX)
-        gfx.color_set(VC_AXIS + X_AXIS, 63488);
-        gfx.color_set(VC_AXIS + Y_AXIS, 2016);
-        gfx.color_set(VC_AXIS + Z_AXIS, 31);
-        gfx.color_set(VC_MOVE, 2047);
-        gfx.color_set(VC_TOOL, 65535);
+        gfx.color_set(NX_AXIS + X_AXIS, 63488);
+        gfx.color_set(NX_AXIS + Y_AXIS, 2016);
+        gfx.color_set(NX_AXIS + Z_AXIS, 31);
+        gfx.color_set(NX_MOVE, 2047);
+        gfx.color_set(NX_TOOL, 65535);
       #endif
 
       #if ENABLED(SDSUPPORT)
@@ -705,7 +900,7 @@
       #endif
 
       Fanpic.attachPop(setfanPopCallback,   &Fanpic);
-      tset.attachPop(sethotPopCallback,     &tset);
+      tenter.attachPop(sethotPopCallback,   &tenter);
       tup.attachPop(settempPopCallback,     &tup);
       tdown.attachPop(settempPopCallback,   &tdown);
       XYHome.attachPop(setmovePopCallback);
@@ -720,41 +915,39 @@
       Retract.attachPop(setmovePopCallback);
       MotorOff.attachPop(motoroffPopCallback);
       Send.attachPop(setgcodePopCallback);
-      YesNo.attachPop(YesNoPopCallback);
+      Yes.attachPop(YesPopCallback);
 
       setpagePrinter();
       startimer.enable();
     }
   }
 
-  static void temptoLCD(int h, float T1, float T2) {
-    char valuetemp[25] = {0};
-    uint32_t color;
-    ZERO(buffer);
-    itoa(T1, valuetemp, 10);
-    strcat(buffer, valuetemp);
-    strcat(buffer, "/");
-    itoa(T2, valuetemp, 10);
-    strcat(buffer, valuetemp);
-    strcat(buffer, "  ");
+  static void degtoLCD(const uint8_t h, const float temp) {
+    static const uint16_t maxTemp =
+      #if HOTENDS == 1
+        HEATER_0_MAXTEMP;
+      #else
+        200;
+      #endif
 
-    if (T2 > 0) {
-      uint32_t prc = T1 / T2 * 100;
+    heater_list0[h]->setValue(temp);
 
-      if (prc <= 50)
-        color = 1023;
-      else if (prc <= 75)
-        color = 65504;
-      else if (prc <= 95)
-        color = 64512;
-      else
-        color = 63488;
-    }
-    else
-      color = 65535;
+    #if ENABLED(NEXTION_GFX)
+      if (!(print_job_counter.isRunning() || IS_SD_PRINTING) && !Wavetemp.GetSatus()) {
+        Wavetemp.setShow();
+      }
+    #endif
 
-    hotend_list[h]->setText(buffer);
-    hotend_list[h]->Set_font_color_pco(color);
+    #if ENABLED(NEXTION_WAVETEMP)
+      if (h == 0) {
+        uint8_t wavetemp = (temp / maxTemp) * 150;
+        Wavetemp.addValue(0, wavetemp);
+      }
+    #endif
+  }
+
+  static void targetdegtoLCD(const uint8_t h, const float temp) {
+    heater_list1[h]->setValue(temp);
   }
 
   static void coordtoLCD() {
@@ -781,15 +974,17 @@
       strcat(buffer, valuetemp);
     }
 
-    if (NextionPage == 2) LedCoord1.setText(buffer);
+    if (PageID == 2) LedCoord1.setText(buffer);
     else LedCoord5.setText(buffer);
   }
 
   void lcd_update() {
     static uint8_t  PreviousPage = 0,
+                    Previousfeedrate = 0,
                     PreviousfanSpeed = 0,
-                    PreviouspercentDone = 0,
-                    PreviousdegHotend[3] = { 0 };
+                    PreviouspercentDone = 0;
+    static float    PreviousdegHeater[3] = { 0.0 },
+                    PrevioustargetdegHeater[3] = { 0.0 };
     char* temp;
 
     if (!NextionON) return;
@@ -798,11 +993,13 @@
 
     millis_t ms = millis();
 
-    if (ms > next_lcd_update_ms) {
+    if (ELAPSED(ms, next_lcd_update_ms)) {
 
-      sendCurrentPageId(&NextionPage);
+      next_lcd_update_ms = ms + NEXTION_UPDATE_INTERVAL;
 
-      switch (NextionPage) {
+      PageID = Nextion_PageID();
+
+      switch (PageID) {
         case 2:
           if (PreviousPage != 2) {
             lcd_setstatus(lcd_status_message);
@@ -831,37 +1028,46 @@
             PreviousfanSpeed = fanSpeed;
           }
 
-          static uint32_t temp_feedrate = 0;
-          VSpeed.getValue(&temp_feedrate);
-          feedrate_percentage = (int)temp_feedrate;
+          if (Previousfeedrate != feedrate_percentage) {
+            VSpeed.setValue(feedrate_percentage);
+            Previousfeedrate = feedrate_percentage;
+          }
 
           #if HAS(TEMP_0)
-            if (PreviousdegHotend[0] != thermalManager.degHotend(0)) {
-              temptoLCD(0, thermalManager.degHotend(0), thermalManager.degTargetHotend(0));
-              PreviousdegHotend[0] = thermalManager.degHotend(0);
+            if (PreviousdegHeater[0] != thermalManager.degHotend(0)) {
+              PreviousdegHeater[0] = thermalManager.degHotend(0);
+              degtoLCD(0, PreviousdegHeater[0]);
+            }
+            if (PrevioustargetdegHeater[0] != thermalManager.degTargetHotend(0)) {
+              PrevioustargetdegHeater[0] = thermalManager.degTargetHotend(0);
+              targetdegtoLCD(0, PrevioustargetdegHeater[0]);
             }
           #endif
           #if HAS(TEMP_1)
-            if (PreviousdegHotend[1] != thermalManager.degHotend(1)) {
-              temptoLCD(1, thermalManager.degHotend(1), thermalManager.degTargetHotend(1));
-              PreviousdegHotend[1] = thermalManager.degHotend(1);
+            if (PreviousdegHeater[1] != thermalManager.degHotend(1)) {
+              PreviousdegHeater[1] = thermalManager.degHotend(1);
+              degtoLCD(1, PreviousdegHeater[1]);
+            }
+            if (PrevioustargetdegHeater[1] != thermalManager.degTargetHotend(1)) {
+              PrevioustargetdegHeater[1] = thermalManager.degTargetHotend(1);
+              targetdegtoLCD(1, PrevioustargetdegHeater[1]);
             }
           #endif
-          #if HAS(TEMP_2)
-            if (PreviousdegHotend[2] != thermalManager.degHotend(2)) {
-              temptoLCD(2, thermalManager.degHotend(2), thermalManager.degTargetHotend(2));
-              PreviousdegHotend[2] = thermalManager.degHotend(2);
+          #if HAS(TEMP_BED)
+            if (PreviousdegHeater[2] != thermalManager.degBed()) {
+              PreviousdegHeater[2] = thermalManager.degBed();
+              degtoLCD(2, PreviousdegHeater[2]);
             }
-          #elif HAS(TEMP_BED)
-            if (PreviousdegHotend[2] != thermalManager.degBed()) {
-              temptoLCD(2, thermalManager.degBed(), thermalManager.degTargetBed());
-              PreviousdegHotend[2] = thermalManager.degBed();
+            if (PrevioustargetdegHeater[2] != thermalManager.degTargetBed()) {
+              PrevioustargetdegHeater[2] = thermalManager.degTargetBed();
+              targetdegtoLCD(2, PrevioustargetdegHeater[2]);
             }
           #endif
 
           coordtoLCD();
 
           #if ENABLED(SDSUPPORT)
+
             if (card.isFileOpen()) {
               if (SDstatus != 2) {
                 SDstatus = 2;
@@ -904,7 +1110,9 @@
               NPlay.setPic(27);
               NStop.setPic(30);
             }
-          #endif
+
+          #endif // SDSUPPORT
+
           break;
         #if ENABLED(SDSUPPORT)
           case 3:
@@ -914,24 +1122,28 @@
         case 5:
           coordtoLCD();
           break;
+        case 6:
+          static uint32_t temp_feedrate = 0;
+          VSpeed.getValue(&temp_feedrate, "printer");
+          Previousfeedrate = feedrate_percentage = (int)temp_feedrate;
+          break;
       }
 
-      next_lcd_update_ms = ms + LCD_UPDATE_INTERVAL;
-      PreviousPage = NextionPage;
+      PreviousPage = PageID;
     }
   }
 
   void lcd_setstatus(const char* message, bool persist) {
     if (lcd_status_message_level > 0 || !NextionON) return;
     strncpy(lcd_status_message, message, 30);
-    LedStatus.setText(lcd_status_message);
+    if (PageID == 2) LedStatus.setText(lcd_status_message);
   }
 
   void lcd_setstatuspgm(const char* message, uint8_t level) {
     if (level >= lcd_status_message_level && NextionON) {
       strncpy_P(lcd_status_message, message, 30);
       lcd_status_message_level = level;
-      LedStatus.setText(lcd_status_message);
+      if (PageID == 2) LedStatus.setText(lcd_status_message);
     }
   }
 
@@ -948,19 +1160,30 @@
   }
 
   #if ENABLED(NEXTION_GFX)
-    void gfx_clear(float x, float y, float z) {
-      if ((NextionPage == 2) && (print_job_counter.isRunning() || IS_SD_PRINTING))
-        gfx.clear(x, y, z);
+    void gfx_origin(const float x, const float y, const float z) {
+      gfx.origin(x, y, z);
     }
 
-    void gfx_cursor_to(float x, float y, float z) {
-      if ((NextionPage == 2) && (print_job_counter.isRunning() || IS_SD_PRINTING))
+    void gfx_scale(const float scale) {
+      if ((PageID == 2) && (print_job_counter.isRunning() || IS_SD_PRINTING))
+        gfx.clear(scale);
+    }
+
+    void gfx_clear(const float x, const float y, const float z) {
+      if ((PageID == 2) && (print_job_counter.isRunning() || IS_SD_PRINTING)) {
+        Wavetemp.setHide();
+        gfx.clear(x, y, z);
+      }
+    }
+
+    void gfx_cursor_to(const float x, const float y, const float z) {
+      if ((PageID == 2) && (print_job_counter.isRunning() || IS_SD_PRINTING))
         gfx.cursor_to(x, y, z);
     }
 
-    void gfx_line_to(float x, float y, float z){
-      if ((NextionPage == 2) && (print_job_counter.isRunning() || IS_SD_PRINTING))
-        gfx.line_to(VC_TOOL, x, y, z);
+    void gfx_line_to(const float x, const float y, const float z) {
+      if ((PageID == 2) && (print_job_counter.isRunning() || IS_SD_PRINTING))
+        gfx.line_to(NX_TOOL, x, y, z);
     }
   #endif
 

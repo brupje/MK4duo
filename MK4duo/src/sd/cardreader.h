@@ -33,9 +33,6 @@
 #define SHORT_FILENAME_LENGTH 14
 #define GENBY_SIZE 16
 
-extern char tempLongFilename[LONG_FILENAME_LENGTH + 1];
-extern char fullName[LONG_FILENAME_LENGTH * SD_MAX_FOLDER_DEPTH + SD_MAX_FOLDER_DEPTH + 1];
-
 enum LsAction { LS_Count, LS_GetFilename };
 
 #include "SDFat.h"
@@ -53,6 +50,7 @@ public:
   void ls();
   void getfilename(uint16_t nr, const char* const match = NULL);
   void startFileprint();
+  void openAndPrintFile(const char *name);
   void stopSDPrint(bool store_location = false);
   void write_command(char* buf);
   bool selectFile(const char *filename, bool silent = false);
@@ -69,6 +67,20 @@ public:
   void setroot(bool temporary = false);
   void setlast();
 
+  void ResetDefault();
+  void PrintSettings();
+  #if ENABLED(SD_SETTINGS)
+    #define CFG_SD_MAX_KEY_LEN    3+1         // icrease this if you add key name longer than the actual value.
+    #define CFG_SD_MAX_VALUE_LEN  10+1        // this should be enought for int, long and float if you need to retrive strings increase this carefully
+    //(11 = strlen("4294967295")+1) (4294967295 = (2^32)-1) (32 = the num of bits of the bigger basic data scructor used)
+    //If yuou need to save string increase this to strlen("YOUR LONGER STRING")+1
+    void StoreSettings();
+    void RetrieveSettings(bool addValue = false);
+    int  KeyIndex(char *key);
+  #else
+    inline void RetrieveSettings() { ResetDefault(); }
+  #endif
+
   uint16_t getnrfilenames();
 
   void parseKeyLine(char* key, char* value, int &len_k, int &len_v);
@@ -80,7 +92,7 @@ public:
   FORCE_INLINE bool eof() { return sdpos >= fileSize; }
   FORCE_INLINE int16_t get() { sdpos = file.curPosition(); return (int16_t)file.read(); }
   FORCE_INLINE uint8_t percentDone() { return (isFileOpen() && fileSize) ? sdpos / ((fileSize + 99) / 100) : 0; }
-  FORCE_INLINE char* getWorkDirName() { workDir.getFilename(fullName); return fullName; }
+  FORCE_INLINE char* getWorkDirName() { workDir.getFilename(fileName); return fileName; }
 
   //files init.g on the sd card are performed in a row
   //this is to delay autostart and hence the initialisaiton of the sd card to some seconds after the normal init, so the device is available quick after a reset
@@ -89,6 +101,8 @@ public:
   bool saving, sdprinting, cardOK, filenameIsDir;
   uint32_t fileSize, sdpos;
   float objectHeight, firstlayerHeight, layerHeight, filamentNeeded;
+  char fileName[LONG_FILENAME_LENGTH * SD_MAX_FOLDER_DEPTH + SD_MAX_FOLDER_DEPTH + 1];
+  char tempLongFilename[LONG_FILENAME_LENGTH + 1];
   char generatedBy[GENBY_SIZE];
 
   static void printEscapeChars(const char* s);

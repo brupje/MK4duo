@@ -1,6 +1,43 @@
+### Version 4.3.09_dev
+* Add Save in EEPROM ABL (Linear or Bilinear) or MBL
+* Add M323 Set Level bilinear manual - X<gridx> Y<gridy> Z<level val> S<level add>
+* Add Door open, a triggered door will prevent new commands from serial or sd card.
+* Fix HAL
+
+### Version 4.3.08_dev
+* Add ABL or MBL leveling fade height M320 Z<zzz> (ABL) or M420 Z<zzz> (MBL)
+* Add RGB LED M150: Set Status LED Color - Use R-U-B for R-G-B
+* Add Case Light M355 S<bool> P<byte>
+* Add M995 X Y Z set origin for graphic in NEXTION
+* Add M996 S<scale> scale graphic in NEXTION
+* Add Autocalibration 7 points for DELTA (Similar RepRapFirmware)
+
+### Version 4.3.07_dev
+* Add ENSURE_SMOOTH_MOVES - Enable this option to prevent the machine from stuttering when printing multiple short segments.
+* Add USE_BIG_EDIT_FONT   - A bigger font is available for edit items in graphical displays. Costs 3120 bytes of PROGMEM.
+* Add USE_SMALL_INFOFONT  - A smaller font may be used on the Info Screen in graphical displays. Costs 2300 bytes of PROGMEM. 
+* Add Waveform temperature for Nextion.
+* Add option for refresh Nextion
+* Add option for name firmware file Nextion
+
+### Version 4.3.06_dev
+* Add Auto report temp width M155
+* Add new capabilities string width M115
+* Add M155 Set temperature auto-report interval
+* Add M320 Activate autolevel
+* Add M321 Deactivate autoleveling
+* Add M322 Reset auto leveling matrix
+* Change M11 in M530
+* Add M530 Enables explicit printing mode (S1) or disables it (S0). L can set layer count
+* Add M531 Define filename being printed
+* Add M532 update current print state progress (X=0..100) and layer L
+
 ### Version 4.3.05_dev
 * Add register in EEPROM Bilinear Bed Level
+* Add M355 Turn case lights on/off
 * Fix Error width 8bit and 2 or more Hotends
+* Upgrade Nextion width Filament Change
+* New Fix
 
 ### Version 4.3.04_dev
 * Fix Code

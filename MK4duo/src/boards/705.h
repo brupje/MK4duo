@@ -6,7 +6,7 @@
 #define KNOWN_BOARD
 #define BOARD_NAME "Ultratronics v1.0"
 
-#ifndef __SAM3X8E__
+#ifndef ARDUINO_ARCH_SAM
   #error Oops!  Make sure you have 'Arduino Due' selected from the 'Tools -> Boards' menu.
 #endif
 
@@ -69,11 +69,11 @@
 #define ORIG_HEATER_2_PIN      7
 #define ORIG_HEATER_3_PIN      9
 
-#define ORIG_TEMP_BED_PIN      0  // ANALOG NUMBERING
-#define ORIG_TEMP_0_PIN        1  // ANALOG NUMBERING
-#define ORIG_TEMP_1_PIN        2  // ANALOG NUMBERING
-#define ORIG_TEMP_2_PIN        3  // ANALOG NUMBERING
-#define ORIG_TEMP_3_PIN        4  // ANALOG NUMBERING
+#define ORIG_TEMP_BED_PIN      6  // ANALOG NUMBERING
+#define ORIG_TEMP_0_PIN        7  // ANALOG NUMBERING
+#define ORIG_TEMP_1_PIN        5  // ANALOG NUMBERING
+#define ORIG_TEMP_2_PIN        4  // ANALOG NUMBERING
+#define ORIG_TEMP_3_PIN        3  // ANALOG NUMBERING
 
 // SPI for Max6675 or Max31855 Thermocouple
 #define MAX31855_SS0          65

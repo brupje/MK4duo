@@ -27,13 +27,10 @@
  */
 
 /**
- * Due to the high number of issues related with old versions of Arduino IDE
- * we are now warning our users to update their toolkits. In a future Marlin
- * release we will stop supporting old IDE versions and will require user
- * action to proceed with compilation in such environments.
+ * Require gcc 4.7 or newer (first included with Arduino 1.6.8) for C++11 features.
  */
-#if !defined(ARDUINO) || ARDUINO < 10609
-  #error "Versions of Arduino IDE prior to 1.6.9 are no longer supported, please update your toolkit."
+#if __cplusplus < 201103L
+  #error "Marlin requires C++11 support (gcc >= 4.7, Arduino IDE >= 1.6.8). Please upgrade your toolchain."
 #endif
 
 // Start check
@@ -441,9 +438,6 @@
   #if DISABLED(EXTRUDER_RUNOUT_SECONDS)
     #error DEPENDENCY ERROR: Missing setting EXTRUDER_RUNOUT_SECONDS
   #endif
-  #if DISABLED(EXTRUDER_RUNOUT_ESTEPS)
-    #error DEPENDENCY ERROR: Missing setting EXTRUDER_RUNOUT_ESTEPS
-  #endif
   #if DISABLED(EXTRUDER_RUNOUT_SPEED)
     #error DEPENDENCY ERROR: Missing setting EXTRUDER_RUNOUT_SPEED
   #endif
@@ -546,6 +540,10 @@
       #error "DELTA requires ABL_GRID_POINTS_X and ABL_GRID_POINTS_Y to be 3 or higher."
     #endif
   #endif
+
+  #if ENABLED(AUTO_CALIBRATION_FEATURE) && ENABLED(AUTO_CALIBRATION_7_POINT)
+    #error "Only one system Autocalibration must is defined."
+  #endif
 #endif
 
 /**
@@ -566,7 +564,7 @@
 /**
  * Allow only one bed leveling option to be defined
  */
-#if HAS_ABL
+#if HAS(ABL)
   #define COUNT_LEV_1 0
   #if ENABLED(AUTO_BED_LEVELING_LINEAR)
     #define COUNT_LEV_2 INCREMENT(COUNT_LEV_1)
@@ -687,7 +685,7 @@
   /**
    * Require some kind of probe for bed leveling and probe testing
    */
-  #if HAS(ABL) || ENABLED(AUTO_CALIBRATION_FEATURE)
+  #if HAS(ABL) || ENABLED(AUTO_CALIBRATION_FEATURE) || ENABLED(AUTO_CALIBRATION_7_POINT)
     #error "Auto Bed Leveling or Auto Calibration requires a probe! Define a Z Servo, BLTOUCH, Z_PROBE_ALLEN_KEY, Z_PROBE_SLED, or Z_PROBE_FIX_MOUNTED."
   #elif ENABLED(Z_MIN_PROBE_REPEATABILITY_TEST)
     #error "Z_MIN_PROBE_REPEATABILITY_TEST requires a probe! Define a Z Servo, BLTOUCH, Z_PROBE_ALLEN_KEY, Z_PROBE_SLED, or Z_PROBE_FIX_MOUNTED."
@@ -724,7 +722,7 @@
 /**
  * Auto Bed Leveling
  */
-#if HAS_ABL
+#if HAS(ABL)
 
   /**
    * Delta and SCARA have limited bed leveling options
@@ -742,7 +740,7 @@
    */
   #if ABL_GRID
 
-    #ifndef DELTA_PROBEABLE_RADIUS
+    #if DISABLED(DELTA_PROBEABLE_RADIUS)
       // Be sure points are in the right order
       #if LEFT_PROBE_BED_POSITION > RIGHT_PROBE_BED_POSITION
         #error "LEFT_PROBE_BED_POSITION must be less than RIGHT_PROBE_BED_POSITION."
@@ -865,14 +863,31 @@
     #error DEPENDENCY ERROR: Missing setting DEFAULT_MEASURED_FILAMENT_DIA
   #endif
 #endif
+
+/**
+ * Filament Runout needs a pin and M600 command
+ */
 #if ENABLED(FILAMENT_RUNOUT_SENSOR)
   #if DISABLED(FIL_RUNOUT_PIN_INVERTING)
     #error DEPENDENCY ERROR: Missing setting FIL_RUNOUT_PIN_INVERTING
-  #endif
-  #if DISABLED(FILAMENT_RUNOUT_SCRIPT)
+  #elif DISABLED(FILAMENT_RUNOUT_SCRIPT)
     #error DEPENDENCY ERROR: Missing setting FILAMENT_RUNOUT_SCRIPT 
+  #elif DISABLED(FILAMENT_CHANGE_FEATURE)
+    static_assert(NULL == strstr(FILAMENT_RUNOUT_SCRIPT, "M600"), "FILAMENT_CHANGE_FEATURE is required to use M600 with FILAMENT_RUNOUT_SENSOR.");
   #endif
 #endif
+
+/**
+ * Filament Change with Extruder Runout Prevention
+ */
+#if ENABLED(FILAMENT_CHANGE_FEATURE)
+  #if DISABLED(ULTIPANEL) && DISABLED(NEXTION)
+    #error "FILAMENT_CHANGE_FEATURE currently requires an LCD controller."
+  #elif ENABLED(EXTRUDER_RUNOUT_PREVENT)
+    #error "EXTRUDER_RUNOUT_PREVENT is incompatible with FILAMENT_CHANGE_FEATURE."
+  #endif
+#endif
+
 #if ENABLED(POWER_CONSUMPTION)
   #if DISABLED(POWER_VOLTAGE)
     #error DEPENDENCY ERROR: Missing setting POWER_VOLTAGE
@@ -911,8 +926,8 @@
     #endif
   #endif
 #endif
-#if DISABLED(DISPLAY_CHARSET_HD44780_JAPAN) && DISABLED(DISPLAY_CHARSET_HD44780_WESTERN) && DISABLED(DISPLAY_CHARSET_HD44780_CYRILLIC)
-  #error DEPENDENCY ERROR: Missing setting DISPLAY_CHARSET_HD44780_JAPAN or DISPLAY_CHARSET_HD44780_WESTERN or DISPLAY_CHARSET_HD44780_CYRILLIC
+#if DISABLED(DOGLCD) && ENABLED(ULTRA_LCD) && DISABLED(DISPLAY_CHARSET_HD44780)
+  #error "You must set DISPLAY_CHARSET_HD44780 to JAPANESE, WESTERN or CYRILLIC for your LCD controller."
 #endif
 #if ENABLED(SHOW_BOOTSCREEN)
   #if DISABLED(STRING_SPLASH_LINE1)
@@ -932,7 +947,7 @@
     #endif
   #endif
 #endif
-#if MB(ALLIGATOR)
+#if MB(ALLIGATOR) || MB(ALLIGATOR_V3)
   #if DISABLED(UI_VOLTAGE_LEVEL)
     #error DEPENDENCY ERROR: Missing setting UI_VOLTAGE_LEVEL
   #endif
@@ -1444,9 +1459,9 @@
   #endif
 #endif
 
-#if MECH(COREXY) || MECH(COREYX) || MECH(COREXZ) || MECH(COREZX)
-  #if DISABLED(COREX_YZ_FACTOR)
-    #error DEPENDENCY ERROR: Missing setting COREX_YZ_FACTOR
+#if IS_CORE
+  #if DISABLED(CORE_FACTOR)
+    #error DEPENDENCY ERROR: Missing setting CORE_FACTOR
   #endif
 #endif
 
@@ -1658,13 +1673,6 @@
  */
 #if DISABLED(DOGLCD) && ENABLED(ULTRA_LCD) && DISABLED(DISPLAY_CHARSET_HD44780_JAPAN) && DISABLED(DISPLAY_CHARSET_HD44780_WESTERN) && DISABLED(DISPLAY_CHARSET_HD44780_CYRILLIC)
   #error DEPENDENCY ERROR: You must enable either DISPLAY_CHARSET_HD44780_JAPAN or DISPLAY_CHARSET_HD44780_WESTERN  or DISPLAY_CHARSET_HD44780_CYRILLIC for your LCD controller.
-#endif
-
-/**
- * Required LCD for FILAMENT_CHANGE_FEATURE
- */
-#if ENABLED(FILAMENT_CHANGE_FEATURE) && DISABLED(ULTRA_LCD)
-  #error DEPENDENCY ERROR: You must have LCD in order to use FILAMENT_CHANGE_FEATURE
 #endif
 
 /**
@@ -1950,6 +1958,10 @@
 
 #if ENABLED(POWER_CONSUMPTION) && !PIN_EXISTS(POWER_CONSUMPTION)
   #error DEPENDENCY ERROR: You have to set POWER_CONSUMPTION_PIN to a valid pin if you enable POWER_CONSUMPTION
+#endif
+
+#if ENABLED(DOOR_OPEN) && !PIN_EXISTS(DOOR)
+  #error DEPENDENCY ERROR: You have to set DOOR_PIN to a valid pin if you enable DOOR_OPEN
 #endif
 
 #if ENABLED(PHOTOGRAPH) && !PIN_EXISTS(PHOTOGRAPH)

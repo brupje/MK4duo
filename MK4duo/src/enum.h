@@ -117,10 +117,12 @@ enum TempState {
  * MK4duo sends messages if blocked or busy
  */
 #if ENABLED(HOST_KEEPALIVE_FEATURE)
-  enum MKBusyState {
+  enum FirmwareState {
     NOT_BUSY,           // Not in a handler
     IN_HANDLER,         // Processing a GCode
     IN_PROCESS,         // Known to be blocking command input (as in G29)
+    WAIT_HEATER,        // Wait heater
+    DOOR_OPEN,          // Door open
     PAUSED_FOR_USER,    // Blocking pending any input
     PAUSED_FOR_INPUT    // Blocking pending text input (concept)
   };
@@ -133,7 +135,7 @@ enum TempState {
     FILAMENT_CHANGE_RESPONSE_RESUME_PRINT
   };
   
-  #if ENABLED(ULTIPANEL)
+  #if HAS(LCD)
     enum FilamentChangeMessage {
       FILAMENT_CHANGE_MESSAGE_INIT,
       FILAMENT_CHANGE_MESSAGE_UNLOAD,
@@ -172,7 +174,8 @@ enum LCDViewAction {
   LCDVIEW_REDRAW_NOW,
   LCDVIEW_CALL_REDRAW_NEXT,
   LCDVIEW_CLEAR_CALL_REDRAW,
-  LCDVIEW_CALL_NO_REDRAW
+  LCDVIEW_CALL_NO_REDRAW,
+  LCDVIEW_U8G_CONTINUE
 };
 
 /**

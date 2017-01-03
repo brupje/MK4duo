@@ -33,6 +33,18 @@
 
   #define LCD_HAS_DIRECTIONAL_BUTTONS (BUTTON_EXISTS(UP) || BUTTON_EXISTS(DWN) || BUTTON_EXISTS(LFT) || BUTTON_EXISTS(RT))
 
+  #if ENABLED(SAV_3DGLCD)
+    //#define U8GLIB_SSD1306
+    #define U8GLIB_SH1106
+  #endif
+
+  #if ENABLED(RADDS_DISPLAY)
+    #define ENCODER_PULSES_PER_STEP 2
+    #define ENCODER_STEPS_PER_MENU_ITEM 1
+    #define ULTIPANEL
+    #define NEWPANEL
+  #endif
+
   #if ENABLED(CARTESIO_UI)
     #define DOGLCD
     #define ULTIPANEL
@@ -44,9 +56,9 @@
 
   #if ENABLED(MAKRPANEL) || ENABLED(MINIPANEL)
     #define DOGLCD
-    #define DEFAULT_LCD_CONTRAST 17
     #define ULTIPANEL
     #define NEWPANEL
+    #define DEFAULT_LCD_CONTRAST 17
   #endif
 
   #if ENABLED(miniVIKI) || ENABLED(VIKI2) || ENABLED(ELB_FULL_GRAPHIC_CONTROLLER)
@@ -76,10 +88,11 @@
     #endif
   #endif
 
-  // Generic support for SSD1306 OLED based LCDs.
+  // Generic support for SSD1306 / SH1106 OLED based LCDs.
   #if ENABLED(U8GLIB_SSD1306) || ENABLED(U8GLIB_SH1106)
     #define ULTRA_LCD  //general LCD support, also 16x2
-    #define DOGLCD  // Support for I2C LCD 128x64 (Controller SSD1306 graphic Display Family)
+    #define DOGLCD  // Support for I2C LCD 128x64 (Controller SSD1306 / SH1106 graphic Display Family)
+    #define BLEN_C 2
   #endif
 
   #if ENABLED(PANEL_ONE) || ENABLED(U8GLIB_SH1106)
@@ -117,35 +130,6 @@
     #define NEWPANEL
   #endif
 
-  #if ENABLED(REPRAPWORLD_GRAPHICAL_LCD)
-    #define DOGLCD
-    #define U8GLIB_ST7920
-    #define ULTIPANEL
-    #define NEWPANEL
-  #endif
-
-  #if ENABLED(SPARK_FULL_GRAPHICS)
-    #define ENCODER_PULSES_PER_STEP 2
-    #define ENCODER_STEPS_PER_MENU_ITEM 1
-
-    #define DOGLCD
-    #define U8GLIB_ST7920
-    #define REPRAP_DISCOUNT_SMART_CONTROLLER
-  #endif
-
-  #if ENABLED(REPRAP_DISCOUNT_SMART_CONTROLLER)
-    #if DISABLED(SDSUPPORT)
-      #define SDSUPPORT
-    #endif
-  #endif
-
-  #if ENABLED(RADDS_DISPLAY)
-    #define ENCODER_PULSES_PER_STEP 2
-    #define ENCODER_STEPS_PER_MENU_ITEM 1
-    #define ULTIPANEL
-    #define NEWPANEL
-  #endif
-
   #if ENABLED(RA_CONTROL_PANEL)
     #define LCD_I2C_TYPE_PCA8574
     #define LCD_I2C_ADDRESS 0x27   // I2C Address of the port expander
@@ -153,11 +137,11 @@
     #define NEWPANEL
   #endif
 
-  #if ENABLED(MINIPANEL)
-   #define DOGLCD
-   #define ULTIPANEL
-   #define NEWPANEL
-   #define DEFAULT_LCD_CONTRAST 17
+  #if ENABLED(REPRAPWORLD_GRAPHICAL_LCD)
+    #define DOGLCD
+    #define U8GLIB_ST7920
+    #define ULTIPANEL
+    #define NEWPANEL
   #endif
 
   /**
@@ -185,11 +169,6 @@
       #define ENCODER_STEPS_PER_MENU_ITEM 1
     #endif
 
-    #if ENABLED(LCD_USE_I2C_BUZZER)
-      #define LCD_FEEDBACK_FREQUENCY_HZ 1000
-      #define LCD_FEEDBACK_FREQUENCY_DURATION_MS 100
-    #endif
-
     #define ULTIPANEL
     #define NEWPANEL
   #endif
@@ -205,6 +184,15 @@
     #define LCD_USE_I2C_BUZZER //comment out to disable buzzer on LCD (requires LiquidTWI2 v1.2.3 or later)
     #define ULTIPANEL
     #define NEWPANEL
+
+    #define ENCODER_FEEDRATE_DEADZONE 4
+
+    #ifndef ENCODER_PULSES_PER_STEP
+      #define ENCODER_PULSES_PER_STEP 1
+    #endif
+    #ifndef ENCODER_STEPS_PER_MENU_ITEM
+      #define ENCODER_STEPS_PER_MENU_ITEM 2
+    #endif
   #endif
 
   // Shift register panels
@@ -213,9 +201,9 @@
   // https://bitbucket.org/fmalpartida/new-liquidcrystal/wiki/schematics#!shiftregister-connection
 
   #if ENABLED(SAV_3DLCD)
-     #define SR_LCD_2W_NL    // Non latching 2 wire shiftregister
-     #define ULTIPANEL
-     #define NEWPANEL
+    #define SR_LCD_2W_NL    // Non latching 2 wire shift register
+    #define ULTIPANEL
+    #define NEWPANEL
   #endif
 
   #if ENABLED(DOGLCD) // Change number of lines to match the DOG graphic display
@@ -248,7 +236,7 @@
   #endif
 
   #if ENABLED(DOGLCD)
-    /* Custom characters defined in font font_6x10_marlin_symbols */
+    /* Custom characters defined in font dogm_font_data_Marlin_symbols.h / Marlin_symbols.fon */
     // \x00 intentionally skipped to avoid problems in strings
     #define LCD_STR_REFRESH     "\x01"
     #define LCD_STR_FOLDER      "\x02"
@@ -265,7 +253,7 @@
     // Better stay below 0x10 because DISPLAY_CHARSET_HD44780_WESTERN begins here.
   #else
     /* Custom characters defined in the first 8 characters of the LCD */
-    #define LCD_STR_BEDTEMP     "\x00"  // this will have 'unexpected' results when used in a string!
+    #define LCD_STR_BEDTEMP     "\x00"  // Print only as a char. This will have 'unexpected' results when used in a string!
     #define LCD_STR_DEGREE      "\x01"
     #define LCD_STR_THERMOMETER "\x02"
     #define LCD_STR_UPLEVEL     "\x03"
@@ -303,6 +291,8 @@
   #else
     #define HAS_LCD_CONTRAST false
   #endif
+
+  #define HAS_DEBUG_MENU ENABLED(LCD_PROGRESS_BAR_TEST)
 
 #endif // CONFIGURATION_LCD
 
@@ -391,6 +381,32 @@
 #else
   #undef HOTENDS
   #define HOTENDS           EXTRUDERS
+#endif
+
+/**
+ * Multi-extruders support
+ */
+#if EXTRUDERS > 1
+  #define XYZE_N    3 + EXTRUDERS
+  #define E_AXIS_N  (E_AXIS + extruder)
+  #define E_INDEX   (E_AXIS + active_extruder)
+  #define GET_TARGET_EXTRUDER(CMD) if (get_target_extruder_from_command(CMD)) return
+  #define TARGET_EXTRUDER target_extruder
+#else
+  #define XYZE_N    XYZE
+  #define E_AXIS_N  E_AXIS
+  #define E_INDEX   E_AXIS
+  #define GET_TARGET_EXTRUDER(CMD) NOOP
+  #define TARGET_EXTRUDER 0
+#endif
+
+/**
+ * Multi-hotends support
+ */
+#if HOTENDS > 1
+  #define GET_TARGET_HOTEND(CMD) if (get_target_hotend_from_command(CMD)) return
+#else
+  #define GET_TARGET_HOTEND(CMD) NOOP
 #endif
 
 #endif // CONDITIONALS_PRE_H

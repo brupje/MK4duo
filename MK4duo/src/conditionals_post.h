@@ -31,7 +31,7 @@
 /**
  * SAM3X8E
  */
-#if ENABLED(__SAM3X8E__)
+#if ENABLED(ARDUINO_ARCH_SAM)
   #if ENABLED(FAST_PWM_FAN)
     #undef FAST_PWM_FAN
   #endif
@@ -51,21 +51,28 @@
 #define Z_CENTER float((Z_MIN_POS + Z_MAX_POS) * 0.5)
 
 /**
- * CoreXY or CoreYX or CoreXZ or CoreZX
+ * CoreXY, CoreXZ, and CoreYZ - and their reverse
  */
-#if MECH(COREXY) || MECH(COREYX)
-  #define CORE_AXIS_1 A_AXIS
-  #define CORE_AXIS_2 B_AXIS
-  #define NORMAL_AXIS Z_AXIS
-#elif MECH(COREXZ) || MECH(COREZX)
-  #define CORE_AXIS_1 A_AXIS
-  #define CORE_AXIS_2 C_AXIS
-  #define NORMAL_AXIS Y_AXIS
+#if IS_CORE
+  #if CORE_IS_XY
+    #define CORE_AXIS_1 A_AXIS
+    #define CORE_AXIS_2 B_AXIS
+    #define NORMAL_AXIS Z_AXIS
+  #elif CORE_IS_XZ
+    #define CORE_AXIS_1 A_AXIS
+    #define NORMAL_AXIS Y_AXIS
+    #define CORE_AXIS_2 C_AXIS
+  #elif CORE_IS_YZ
+    #define NORMAL_AXIS X_AXIS
+    #define CORE_AXIS_1 B_AXIS
+    #define CORE_AXIS_2 C_AXIS
+  #endif
+  #if (MECH(COREXY) || MECH(COREXZ) || MECH(COREYZ))
+    #define CORESIGN(n) (n)
+  #else
+    #define CORESIGN(n) (-(n))
+  #endif
 #endif
-
-#define IS_SCARA (MECH(MORGAN_SCARA) || MECH(MAKERARM_SCARA))
-#define IS_KINEMATIC (MECH(DELTA) || IS_SCARA)
-#define IS_CARTESIAN !IS_KINEMATIC
 
 /**
  * SCARA cannot use SLOWDOWN and requires QUICKHOME
@@ -119,16 +126,7 @@
 /**
  * Auto Bed Leveling and Z Probe Repeatability Test
  */
-#define HOMING_Z_WITH_PROBE (HAS_BED_PROBE && Z_HOME_DIR < 0 && !HAS_Z_PROBE_PIN)
-
-/**
- * Hardware Serial
- */
-#ifndef __SAM3X8E__
-  #ifndef USBCON
-    #define HardwareSerial_h // trick to disable the standard HWserial
-  #endif
-#endif
+#define HOMING_Z_WITH_PROBE (HAS_BED_PROBE && Z_HOME_DIR < 0)
 
 /**
  * Shorthand for pin tests, used wherever needed
@@ -137,6 +135,7 @@
 #define HAS_TEMP_1 (PIN_EXISTS(TEMP_1) && TEMP_SENSOR_1 != 0)
 #define HAS_TEMP_2 (PIN_EXISTS(TEMP_2) && TEMP_SENSOR_2 != 0)
 #define HAS_TEMP_3 (PIN_EXISTS(TEMP_3) && TEMP_SENSOR_3 != 0)
+#define HAS_TEMP_HOTEND (HAS_TEMP_0 || ENABLED(HEATER_0_USES_MAX6675))
 #define HAS_TEMP_BED (PIN_EXISTS(TEMP_BED) && TEMP_SENSOR_BED != 0)
 #define HAS_TEMP_CHAMBER (PIN_EXISTS(TEMP_CHAMBER) && TEMP_SENSOR_CHAMBER != 0)
 #define HAS_TEMP_COOLER (PIN_EXISTS(TEMP_COOLER) && TEMP_SENSOR_COOLER != 0)
@@ -187,10 +186,13 @@
 #define HAS_SOLENOID_1 (PIN_EXISTS(SOL1))
 #define HAS_SOLENOID_2 (PIN_EXISTS(SOL2))
 #define HAS_SOLENOID_3 (PIN_EXISTS(SOL3))
-#define HAS_MICROSTEPS (ENABLED(USE_MICROSTEPS) && PIN_EXISTS(X_MS1))
+#define HAS_MICROSTEPS_X (ENABLED(USE_MICROSTEPS) && PIN_EXISTS(X_MS1))
+#define HAS_MICROSTEPS_Y (ENABLED(USE_MICROSTEPS) && PIN_EXISTS(Y_MS1))
+#define HAS_MICROSTEPS_Z (ENABLED(USE_MICROSTEPS) && PIN_EXISTS(Z_MS1))
 #define HAS_MICROSTEPS_E0 (ENABLED(USE_MICROSTEPS) && PIN_EXISTS(E0_MS1))
 #define HAS_MICROSTEPS_E1 (ENABLED(USE_MICROSTEPS) && PIN_EXISTS(E1_MS1))
 #define HAS_MICROSTEPS_E2 (ENABLED(USE_MICROSTEPS) && PIN_EXISTS(E2_MS1))
+#define HAS_MICROSTEPS (HAS_MICROSTEPS_X || HAS_MICROSTEPS_Y || HAS_MICROSTEPS_Z || HAS_MICROSTEPS_E0 || HAS_MICROSTEPS_E1 || HAS_MICROSTEPS_E2)
 #define HAS_STEPPER_RESET (PIN_EXISTS(STEPPER_RESET))
 #define HAS_X_ENABLE (PIN_EXISTS(X_ENABLE))
 #define HAS_X2_ENABLE (PIN_EXISTS(X2_ENABLE))
@@ -236,12 +238,14 @@
 #define HAS_BTN_BACK (PIN_EXISTS(BTN_BACK))
 #define HAS_POWER_SWITCH (POWER_SUPPLY > 0 && PIN_EXISTS(PS_ON))
 #define HAS_MOTOR_CURRENT_PWM_XY (PIN_EXISTS(MOTOR_CURRENT_PWM_XY))
+#define HAS_LCD (ENABLED(ULTRA_LCD) || ENABLED(NEXTION))
 #define HAS_SDSUPPORT (ENABLED(SDSUPPORT))
 #define HAS_DIGIPOTSS (PIN_EXISTS(DIGIPOTSS))
 #define HAS_MOTOR_CURRENT_PWM (PIN_EXISTS(MOTOR_CURRENT_PWM_XY) || PIN_EXISTS(MOTOR_CURRENT_PWM_Z) || PIN_EXISTS(MOTOR_CURRENT_PWM_E))
-#define HAS_TEMP_HOTEND (HAS_TEMP_0 || ENABLED(HEATER_0_USES_MAX6675))
 #define HAS_THERMALLY_PROTECTED_BED (HAS_TEMP_BED && HAS_HEATER_BED && ENABLED(THERMAL_PROTECTION_BED))
 #define HAS_DONDOLO (ENABLED(DONDOLO_SINGLE_MOTOR) || ENABLED(DONDOLO_DUAL_MOTOR))
+#define HAS_CASE_LIGHT (ENABLED(CASE_LIGHT) && PIN_EXISTS(CASE_LIGHT))
+#define HAS_DOOR (ENABLED(DOOR_OPEN) && PIN_EXISTS(DOOR))
 
 /**
  * Shorthand for filament sensor and power sensor for ultralcd.cpp, dogm_lcd_implementation.h, ultralcd_implementation_hitachi_HD44780.h
@@ -275,7 +279,7 @@
 /**
  * ENDSTOP LOGICAL
  */
-#if MB(ALLIGATOR)
+#if MB(ALLIGATOR) || MB(ALLIGATOR_V3)
   #define X_MIN_ENDSTOP_INVERTING   !X_MIN_ENDSTOP_LOGIC
   #define Y_MIN_ENDSTOP_INVERTING   !Y_MIN_ENDSTOP_LOGIC
   #define Z_MIN_ENDSTOP_INVERTING   !Z_MIN_ENDSTOP_LOGIC
@@ -324,6 +328,11 @@
   #undef SLOWDOWN       // DELTA not needs SLOWDOWN
   #undef Z_SAFE_HOMING  // DELTA non needs Z_SAFE_HOMING
 
+  #if ENABLED(ENSURE_SMOOTH_MOVES) && (1000000 / DELTA_SEGMENTS_PER_SECOND) < MIN_BLOCK_TIME
+    #undef MIN_BLOCK_TIME
+    #define MIN_BLOCK_TIME (1000000UL / DELTA_SEGMENTS_PER_SECOND)
+  #endif
+
   // DELTA must have same valour for 3 axis endstop hits
   #define X_HOME_BUMP_MM XYZ_HOME_BUMP_MM
   #define Y_HOME_BUMP_MM XYZ_HOME_BUMP_MM
@@ -344,31 +353,13 @@
   #define Z_PROBE_SPEED_SLOW  Z_PROBE_SPEED
 
   // Set the rectangle in which to probe
-  #define DELTA_PROBEABLE_RADIUS    (DELTA_PRINTABLE_RADIUS - 10)
+  #define DELTA_PROBEABLE_RADIUS    (DELTA_PRINTABLE_RADIUS - 5)
   #define LEFT_PROBE_BED_POSITION   -(DELTA_PROBEABLE_RADIUS)
   #define RIGHT_PROBE_BED_POSITION  (DELTA_PROBEABLE_RADIUS)
   #define FRONT_PROBE_BED_POSITION  -(DELTA_PROBEABLE_RADIUS)
   #define BACK_PROBE_BED_POSITION   (DELTA_PROBEABLE_RADIUS)
 
 #endif
-
-/**
- * Set the home position based on settings or manual overrides
- */
-#if ENABLED(MANUAL_HOME_POSITIONS)
-  #define X_HOME_POS MANUAL_X_HOME_POS
-  #define Y_HOME_POS MANUAL_Y_HOME_POS
-  #define Z_HOME_POS MANUAL_Z_HOME_POS
-#else // !MANUAL_HOME_POSITIONS – Use home switch positions based on homing direction and travel limits
-  #if ENABLED(BED_CENTER_AT_0_0)
-    #define X_HOME_POS (X_MAX_LENGTH) * (X_HOME_DIR) * 0.5
-    #define Y_HOME_POS (Y_MAX_LENGTH) * (Y_HOME_DIR) * 0.5
-  #else
-    #define X_HOME_POS (X_HOME_DIR < 0 ? X_MIN_POS : X_MAX_POS)
-    #define Y_HOME_POS (Y_HOME_DIR < 0 ? Y_MIN_POS : Y_MAX_POS)
-  #endif
-  #define Z_HOME_POS (Z_HOME_DIR < 0 ? Z_MIN_POS : Z_MAX_POS)
-#endif // !MANUAL_HOME_POSITIONS
 
 /**
  * The BLTouch Probe emulates a servo probe
@@ -449,7 +440,7 @@
 /**
  * MAX_STEP_FREQUENCY differs for TOSHIBA OR ARDUINO DUE OR ARDUINO MEGA
  */
-#if ENABLED(__SAM3X8E__)
+#if ENABLED(ARDUINO_ARCH_SAM)
   #if ENABLED(CONFIG_STEPPERS_TOSHIBA)
     #define MAX_STEP_FREQUENCY 150000 // Max step frequency for Toshiba Stepper Controllers
     #define DOUBLE_STEP_FREQUENCY MAX_STEP_FREQUENCY
@@ -472,7 +463,7 @@
 #define MICROSTEP2 HIGH,LOW
 #define MICROSTEP4 LOW,HIGH
 #define MICROSTEP8 HIGH,HIGH
-#if MB(ALLIGATOR)
+#if MB(ALLIGATOR) || MB(ALLIGATOR_V3)
   #define MICROSTEP16 LOW,LOW
   #define MICROSTEP32 HIGH,HIGH
 #else
@@ -537,7 +528,9 @@
   #define HEATER_0_USES_THERMISTOR
 #endif
 
-#if TEMP_SENSOR_1 == -1
+#if TEMP_SENSOR_1 <= -2
+  #error "MAX6675 / MAX31855 Thermocouples not supported for TEMP_SENSOR_1"
+#elif TEMP_SENSOR_1 == -1
   #define HEATER_1_USES_AD595
 #elif TEMP_SENSOR_1 == 0
   #undef HEATER_1_MINTEMP
@@ -547,7 +540,9 @@
   #define HEATER_1_USES_THERMISTOR
 #endif
 
-#if TEMP_SENSOR_2 == -1
+#if TEMP_SENSOR_2 <= -2
+  #error "MAX6675 / MAX31855 Thermocouples not supported for TEMP_SENSOR_2"
+#elif TEMP_SENSOR_2 == -1
   #define HEATER_2_USES_AD595
 #elif TEMP_SENSOR_2 == 0
   #undef HEATER_2_MINTEMP
@@ -557,7 +552,9 @@
   #define HEATER_2_USES_THERMISTOR
 #endif
 
-#if TEMP_SENSOR_3 == -1
+#if TEMP_SENSOR_3 <= -2
+  #error "MAX6675 / MAX31855 Thermocouples not supported for TEMP_SENSOR_3"
+#elif TEMP_SENSOR_3 == -1
   #define HEATER_3_USES_AD595
 #elif TEMP_SENSOR_3 == 0
   #undef HEATER_3_MINTEMP
@@ -567,7 +564,9 @@
   #define HEATER_3_USES_THERMISTOR
 #endif
 
-#if TEMP_SENSOR_BED == -1
+#if TEMP_SENSOR_BED <= -2
+  #error "MAX6675 / MAX31855 Thermocouples not supported for TEMP_SENSOR_BED"
+#elif TEMP_SENSOR_BED == -1
   #define BED_USES_AD595
 #elif TEMP_SENSOR_BED == 0
   #undef BED_MINTEMP
@@ -667,8 +666,24 @@
 #endif
 
 /**
- * Buzzer
+ * Buzzer/Speaker
  */
+#if ENABLED(LCD_USE_I2C_BUZZER)
+  #ifndef LCD_FEEDBACK_FREQUENCY_HZ
+    #define LCD_FEEDBACK_FREQUENCY_HZ 1000
+  #endif
+  #ifndef LCD_FEEDBACK_FREQUENCY_DURATION_MS
+    #define LCD_FEEDBACK_FREQUENCY_DURATION_MS 100
+  #endif
+#else
+  #ifndef LCD_FEEDBACK_FREQUENCY_HZ
+    #define LCD_FEEDBACK_FREQUENCY_HZ 5000
+  #endif
+  #ifndef LCD_FEEDBACK_FREQUENCY_DURATION_MS
+    #define LCD_FEEDBACK_FREQUENCY_DURATION_MS 2
+  #endif
+#endif
+
 #define HAS_BUZZER (PIN_EXISTS(BEEPER) || ENABLED(LCD_USE_I2C_BUZZER))
 
 /**
@@ -692,9 +707,6 @@
   #ifndef Z_ENDSTOP_SERVO_NR
     #define Z_ENDSTOP_SERVO_NR -1
   #endif
-  #ifndef SERVO_DEACTIVATION_DELAY
-    #define SERVO_DEACTIVATION_DELAY 300
-  #endif
 #endif
 
 /**
@@ -708,7 +720,6 @@
 #if ENABLED(Z_PROBE_ALLEN_KEY)
   #define PROBE_IS_TRIGGERED_WHEN_STOWED_TEST
 #endif
-
 
 /**
  * Bed Probe dependencies
@@ -730,7 +741,9 @@
     #define Z_PROBE_OFFSET_RANGE_MAX 50
   #endif
   #ifndef XY_PROBE_SPEED
-    #ifdef HOMING_FEEDRATE_XYZ
+    #ifdef HOMING_FEEDRATE_X
+      #define XY_PROBE_SPEED HOMING_FEEDRATE_X
+    #elif define HOMING_FEEDRATE_XYZ
       #define XY_PROBE_SPEED HOMING_FEEDRATE_XYZ
     #else
       #define XY_PROBE_SPEED 4000
@@ -741,9 +754,46 @@
   #else
     #define _Z_PROBE_DEPLOY_HEIGHT Z_PROBE_DEPLOY_HEIGHT
   #endif
+#else
+  #undef X_PROBE_OFFSET_FROM_NOZZLE
+  #undef Y_PROBE_OFFSET_FROM_NOZZLE
+  #undef Z_PROBE_OFFSET_FROM_NOZZLE
+  #define X_PROBE_OFFSET_FROM_NOZZLE 0
+  #define Y_PROBE_OFFSET_FROM_NOZZLE 0
+  #define Z_PROBE_OFFSET_FROM_NOZZLE 0
 #endif
 
 // Stepper pulse duration, in cycles
 #define STEP_PULSE_CYCLES ((MINIMUM_STEPPER_PULSE) * CYCLES_PER_MICROSECOND)
+
+// NEXTION
+#if ENABLED(NEXTION)
+  #if NEXTION_SERIAL == 1
+    #define nexSerial Serial1
+  #elif NEXTION_SERIAL == 2
+    #define nexSerial Serial2
+  #elif NEXTION_SERIAL == 3
+    #define nexSerial Serial3
+  #else
+    #define nexSerial Serial1
+  #endif
+
+  #define dbSerialPrint(a)    {}
+  #define dbSerialPrintln(a)  {}
+  #define dbSerialBegin(a)    {}
+#endif // NEXTION
+
+// MUVE 3D
+#if MECH(MUVE3D) && ENABLED(PROJECTOR_PORT) && ENABLED(PROJECTOR_BAUDRATE)
+  #if PROJECTOR_PORT == 1
+    #define DLPSerial Serial1
+  #elif PROJECTOR_PORT == 2
+    #define DLPSerial Serial2
+  #elif PROJECTOR_PORT == 3
+    #define DLPSerial Serial3
+  #else
+    #define DLPSerial Serial2
+  #endif
+#endif
 
 #endif //CONDITIONALS_H

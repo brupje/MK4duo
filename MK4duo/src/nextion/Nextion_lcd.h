@@ -45,9 +45,6 @@
   #include "../utility/utility.h"
 
   #if ENABLED(NEXTION)
-    #define LCD_UPDATE_INTERVAL 4000
-    #define NEXTION_FIRMWARE_FILE "mk4duo.tft"
-
     void hotPopCallback(void *ptr);
     void sethotPopCallback(void *ptr);
     void settempPopCallback(void *ptr);
@@ -63,9 +60,11 @@
     void lcd_scrollinfo(const char* titolo, const char* message);
 
     #if ENABLED(NEXTION_GFX)
-      void gfx_clear(float x, float y, float z);
-      void gfx_cursor_to(float x, float y, float z);
-      void gfx_line_to(float x, float y, float z);
+      void gfx_origin(const float x, const float y, const float z);
+      void gfx_scale(const float scale);
+      void gfx_clear(const float x, const float y, const float z);
+      void gfx_cursor_to(const float x, const float y, const float z);
+      void gfx_line_to(const float x, const float y, const float z);
     #endif
 
     #if ENABLED(SDSUPPORT)
@@ -79,6 +78,10 @@
       void setpageSD();
       void UploadNewFirmware();
     #endif
+
+    #if ENABLED(FILAMENT_CHANGE_FEATURE)
+      void lcd_filament_change_show_message(FilamentChangeMessage message);
+    #endif // FILAMENT_CHANGE_FEATURE
 
     #if ENABLED(RFID_MODULE)
       void rfidPopCallback(void *ptr);

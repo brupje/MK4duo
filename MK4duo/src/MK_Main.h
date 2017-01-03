@@ -45,26 +45,27 @@ void ok_to_send();
 
 #if IS_KINEMATIC
   extern float delta[ABC];
-  void inverse_kinematics(const float logical[XYZ]);
 #endif
 
-#if MECH(DELTA)
-  extern float  endstop_adj[ABC],
-                diagrod_adj[ABC],
-                tower_adj[6],
-                delta_radius,
-                delta_diagonal_rod,
-                delta_segments_per_second;
-  void set_delta_constants();
-#elif MECH(SCARA)
+#if IS_SCARA
   void forward_kinematics_SCARA(const float &a, const float &b);
+  void inverse_kinematics(const float logical[XYZ]);
 #endif
 
 #if ENABLED(AUTO_BED_LEVELING_BILINEAR)
   extern int bilinear_grid_spacing[2], bilinear_start[2];
   extern float bilinear_level_grid[ABL_GRID_POINTS_X][ABL_GRID_POINTS_Y];
   float bilinear_z_offset(float logical[XYZ]);
-  void print_bed_level(const char* prefix=ECHO);
+  void set_bed_leveling_enabled(bool enable=true);
+#endif
+
+#if ENABLED(ABL_BILINEAR_SUBDIVISION)
+  extern void bed_level_virt_prepare();
+  extern void bed_level_virt_interpolate();
+#endif
+
+#if PLANNER_LEVELING
+  void reset_bed_level();
 #endif
 
 void kill(const char *);
@@ -80,7 +81,12 @@ extern uint8_t mk_debug_flags;
 extern bool Running;
 inline bool IsRunning() { return  Running; }
 inline bool IsStopped() { return !Running; }
-extern bool Printing;
+
+// Print status related
+extern long   currentLayer,
+              maxLayer; // -1 = unknown
+extern char   printName[21]; // max. 20 chars + 0
+extern float  progress;
 
 bool enqueue_and_echo_command(const char* cmd, bool say_ok = false); // put a single ASCII command at the end of the current buffer or return false when it is full
 void enqueue_and_echo_command_now(const char* cmd); // enqueue now, only return when the command has been enqueued
@@ -119,7 +125,7 @@ extern float position_shift[XYZ];
 extern float home_offset[XYZ];
 extern float hotend_offset[XYZ][HOTENDS];
 
-#if ENABLED(ULTIPANEL)
+#if HAS(LCD)
   extern volatile bool wait_for_user;
 #endif
 
@@ -173,7 +179,7 @@ float code_value_temp_diff();
 #endif
 
 #if ENABLED(HOST_KEEPALIVE_FEATURE)
-  extern uint8_t host_keepalive_interval;
+  extern uint32_t host_keepalive_interval;
 #endif
 
 extern int fanSpeed;
@@ -234,7 +240,7 @@ extern uint8_t active_extruder;
 extern uint8_t previous_extruder;
 extern uint8_t active_driver;
 
-#if MB(ALLIGATOR)
+#if MB(ALLIGATOR) || MB(ALLIGATOR_V3)
   extern float motor_current[3 + DRIVER_EXTRUDERS];
 #endif
 

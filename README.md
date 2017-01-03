@@ -1,6 +1,6 @@
 <img align="right" src="Documentation/Logo/MarlinKimbra%20Logo%20GitHub.png"/>
 # MK4duo 3D Printer Firmware for Arduino and Arduino due
-## Version 4.3.05_dev
+## Version 4.3.09_dev
 
 ### Special thanks
 * Wurstnase
@@ -38,7 +38,7 @@ http://marlinkimbra.it
 This version of Marlin was made to accommodate some requests made by the community RepRap Italy http://forums.reprap.org/index.php?349
 
 The new features are:
-* A single Firmware for all types of printers; Cartesian, Delta, SCARA, CoreXY & CoreXZ.
+* A single Firmware for all types of printers; Cartesian, Delta, MORGAN SCARA, MAKERARM SCARA, CoreXY, CoreXZ & CoreYZ and their reverse.
 * The possibility of having only one hotend independently from the extruders that you have.
 * The addition of the 6th extruder.
 * Management Color Mixing Extruder
@@ -48,6 +48,8 @@ The new features are:
 * Management Dual Extruder DONDOLO.
 * Adding commands to facilitate purging of hotend. 
 * Step per unit varied for each extruder as well as the feedrate and the acceleration.
+* Added Autocalibration for DELTA
+* Added Autocalibration 7 points for DELTA (Similar RepRapFirmware)
 * Adding Debug Dryrun used by repetier.
 * Added total Power on time writed in SD CARD.
 * Added total Power consumption writed in SD CARD.
@@ -55,12 +57,17 @@ The new features are:
 * Added anti extruder idle oozing system.
 * Added Hysteresis and Z-Wobble correction (only cartesian printers).
 * Added support reader TAG width MFRC522
+* Added support NEXTION lcd touch
 * Added Cooler and Hot Chamber
 * Added Laser beam and raster base64
 * Addes Mesh Bed Level (MBL)
 * Added Stop and Save for Restart (SSR)
 * Added Nozzle Clean Features
 * Added Nozzle Park Features
+* Added RGB LED
+* Added Case Light
+* Added ABL or MBL leveling fade height
+* Added save in EEPROM ABL or MBL
 
 ## Credits
 

@@ -12,6 +12,11 @@
  * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
  */
+
+#include "../../../base.h"
+
+#if ENABLED(NEXTION)
+
 #include "NexHardware.h"
 
 #define NEX_RET_CMD_FINISHED                (0x01)
@@ -65,7 +70,7 @@ bool recvRetNumber(uint32_t *number, uint32_t timeout)
         && temp[7] == 0xFF
         )
     {
-        *number = (temp[4] << 24) | (temp[3] << 16) | (temp[2] << 8) | (temp[1]);
+        *number = ((uint32_t)temp[4] << 24) | ((uint32_t)temp[3] << 16) | (temp[2] << 8) | (temp[1]);
         ret = true;
     }
 
@@ -264,45 +269,19 @@ void nexLoop(NexTouch *nex_listen_list[])
 }
 
 /**
- * Return current page id.   
- *  
- * @param pageId - output parameter,to save page id.  
- * 
- * @retval true - success. 
- * @retval false - failed. 
+ * Return current page id.
+ *
+ * @retval pageID
  */
-bool sendCurrentPageId(uint8_t* pageId)
-{
+uint8_t Nextion_PageID() {
 
-    bool ret = false;
-    uint8_t temp[5] = {0};
+  uint32_t val;
+  sendCommand("get dp");
 
-    if (!pageId)
-    {
-        goto __return;
-    }
-    sendCommand("sendme");
-    HAL::delayMilliseconds(10);
-    nexSerial.setTimeout(100);
-    if (sizeof(temp) != nexSerial.readBytes((char *)temp, sizeof(temp)))
-    {
-        goto __return;
-    }
-
-    if (temp[0] == NEX_RET_CURRENT_PAGE_ID_HEAD
-    && temp[2] == 0xFF
-    && temp[3] == 0xFF
-    && temp[4] == 0xFF
-    )
-    {
-        *pageId = temp[1];
-        ret = true;
-    }
-
-    __return:
-
-    return ret;
-
+  if (recvRetNumber(&val))
+    return val;
+  else
+    return 0;
 }
 
 /**
@@ -357,3 +336,5 @@ void sendRefreshAll(void)
 {
     sendCommand("ref 0");
 }
+
+#endif

@@ -31,14 +31,6 @@
 #define ORIG_Z_MIN_PIN          18
 #define ORIG_Z_MAX_PIN          19
 
-#define Y2_STEP_PIN             36
-#define Y2_DIR_PIN              34
-#define Y2_ENABLE_PIN           30
-
-#define Z2_STEP_PIN             36
-#define Z2_DIR_PIN              34
-#define Z2_ENABLE_PIN           30
-
 #define ORIG_E0_STEP_PIN        26
 #define ORIG_E0_DIR_PIN         28
 #define ORIG_E0_ENABLE_PIN      24
@@ -100,8 +92,8 @@
 #endif
 
 #if ENABLED(TEMP_STAT_LEDS)
-  #define STAT_LED_RED      32
-  #define STAT_LED_BLUE     35
+  #define STAT_LED_RED_PIN      32
+  #define STAT_LED_BLUE_PIN     35
 #endif
 
 #if ENABLED(ULTRA_LCD)

@@ -80,12 +80,9 @@
 // 1 - Reset controller. Will not reset separate communication chips!
 #define KILL_METHOD 0
 
-// If you want test the firmware uncomment below. Use Serial arduino monitor...
-// ONLY BAUDRATE 115200
-//#define FIRMWARE_TEST
-
 // Some particular clients re-start sending commands only after receiving a 'wait' when there is a bad serial-connection.
-//#define NO_TIMEOUTS 1000 // Milliseconds
+// Milliseconds
+#define NO_TIMEOUTS 1000
 // Uncomment to include more info in ok command
 //#define ADVANCED_OK
 
@@ -94,8 +91,10 @@
 //
 // When enabled MK4duo will send a busy status message to the host
 // every couple of seconds when it can't accept commands.
-#define HOST_KEEPALIVE_FEATURE        // Disable this if your host doesn't like keepalive messages
-#define DEFAULT_KEEPALIVE_INTERVAL 2  // Number of seconds between "busy" messages. Set with M113.
+// Disable this if your host doesn't like keepalive messages
+//#define HOST_KEEPALIVE_FEATURE
+// Number of seconds between "busy" messages. Set with M113.
+#define DEFAULT_KEEPALIVE_INTERVAL 2
 /***********************************************************************/
 
 
@@ -117,9 +116,11 @@
  *                                                                     *
  * CARTESIAN      - Prusa, Mendel, etc                                 *
  * COREXY         - H-Bot/Core XY (x_motor = x+y, y_motor = x-y)       *
- * COREYX         - H-Bot/Core XY (x_motor = y+x, y_motor = y-x)       *
+ * COREYX         - H-Bot/Core YX (x_motor = y+x, y_motor = y-x)       *
  * COREXZ         - H-Bot/Core XZ (x_motor = x+z, z_motor = x-z)       *
- * COREZX         - H-Bot/Core XZ (x_motor = z+x, z_motor = z-x)       *
+ * COREZX         - H-Bot/Core ZX (x_motor = z+x, z_motor = z-x)       *
+ * COREYZ         - H-Bot/Core YZ (y_motor = y+z, z_motor = y-z)       *
+ * COREZY         - H-Bot/Core ZY (y_motor = z+y, z_motor = z-y)       *
  * DELTA          - Rostock, Kossel, RostockMax, Cerberus, etc         *
  * MORGAN_SCARA   - SCARA classic                                      *
  * MAKERARM_SCARA - SCARA Makerfarm                                    *
@@ -130,9 +131,12 @@
 //#define MECHANISM MECH_COREYX
 //#define MECHANISM MECH_COREXZ
 //#define MECHANISM MECH_COREZX
+//#define MECHANISM MECH_COREYZ
+//#define MECHANISM MECH_COREZY
 //#define MECHANISM MECH_DELTA
 //#define MECHANISM MECH_MORGAN_SCARA
 //#define MECHANISM MECH_MAKERARM_SCARA
+//#define MECHANISM MECH_MUVE3D
 /***********************************************************************/
 
 

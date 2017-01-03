@@ -56,7 +56,7 @@ public: /* methods */
      * @param buffer - text buffer terminated with '\0'. 
      * @return true if success, false for failure. 
      */
-    bool setText(const char *buffer);    
+    bool setText(const char *buffer, const char *pname = "");    
 	
     /**
      * Get val attribute of component
@@ -64,7 +64,7 @@ public: /* methods */
      * @param number - buffer storing data retur
      * @return the length of the data 
      */
-    uint32_t getValue(uint32_t *number);
+    uint32_t getValue(uint32_t *number, const char *pname = "");
 	
     /**
      * Set val attribute of component

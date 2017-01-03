@@ -19,9 +19,13 @@ NexVariable::NexVariable(uint8_t pid, uint8_t cid, const char *name)
 {
 }
 
-uint32_t NexVariable::getValue(uint32_t *number)
+uint32_t NexVariable::getValue(uint32_t *number, const char *pname)
 {
     String cmd = String("get ");
+    if (pname != "") {
+      cmd += pname;
+      cmd += ".";
+    }
     cmd += getObjName();
     cmd += ".val";
     sendCommand(cmd.c_str());
@@ -57,9 +61,13 @@ uint32_t NexVariable::getText(char *buffer, uint32_t len)
     return recvRetString(buffer,len);
 }
 
-bool NexVariable::setText(const char *buffer)
+bool NexVariable::setText(const char *buffer, const char *pname)
 {
     String cmd;
+    if (pname != "") {
+      cmd += pname;
+      cmd += ".";
+    }
     cmd += getObjName();
     cmd += ".txt=\"";
     cmd += buffer;

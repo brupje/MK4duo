@@ -25,7 +25,7 @@
 
 #if ENABLED(ULTRA_LCD) || ENABLED(NEXTION)
 
-  char conv[8];
+  char conv[9];
 
   #define DIGIT(n) ('0' + (n))
   #define DIGIMOD(n, f) DIGIT((n)/(f) % 10)
@@ -112,6 +112,23 @@
     return conv;
   }
 
+  #if ENABLED(LCD_DECIMAL_SMALL_XY)
+
+    // Convert float to rj string with 1234, _123, -123, _-12, 12.3, _1.2, or -1.2 format
+    char *ftostr4sign(const float& fx) {
+      int x = fx * 10;
+      if (x <= -100 || x >= 1000) return itostr4sign((int)fx);
+      int xx = abs(x);
+      conv[0] = x < 0 ? '-' : (xx >= 100 ? DIGIMOD(xx, 100) : ' ');
+      conv[1] = DIGIMOD(xx, 10);
+      conv[2] = '.';
+      conv[3] = DIGIMOD(xx, 1);
+      conv[4] = '\0';
+      return conv;
+    }
+
+  #endif // LCD_DECIMAL_SMALL_XY
+
   // Convert float to fixed-length string with +123.4 / -123.4 format
   char* ftostr41sign(const float& x) {
     int xx = x * 10;
@@ -170,6 +187,20 @@
     conv[0] = MINUSOR(xx, '+');
     conv[1] = DIGIMOD(xx, 10000);
     conv[2] = DIGIMOD(xx, 1000);
+    conv[3] = DIGIMOD(xx, 100);
+    conv[4] = '.';
+    conv[5] = DIGIMOD(xx, 10);
+    conv[6] = DIGIMOD(xx, 1);
+    conv[7] = '\0';
+    return conv;
+  }
+
+  // Convert unsigned float to string with 1234.56 format omitting trailing zeros
+  char* ftostr62rj(const float& x) {
+    long xx = abs(x * 100);
+    conv[0] = RJDIGIT(xx, 100000);
+    conv[1] = RJDIGIT(xx, 10000);
+    conv[2] = RJDIGIT(xx, 1000);
     conv[3] = DIGIMOD(xx, 100);
     conv[4] = '.';
     conv[5] = DIGIMOD(xx, 10);

@@ -73,10 +73,10 @@ class Temperature {
     #endif
 
     #if ENABLED(PIDTEMP) || ENABLED(PIDTEMPBED) || ENABLED(PIDTEMPCHAMBER) || ENABLED(PIDTEMPCOOLER)
-      #if ENABLED(__SAM3X8E__)
-        #define PID_dT (((OVERSAMPLENR + 2) * 14.0)/ TEMP_FREQUENCY)
+      #if ENABLED(ARDUINO_ARCH_SAM)
+        #define PID_dT (((OVERSAMPLENR + 2) * 14.0) / TEMP_TIMER_FREQUENCY)
       #else
-        #define PID_dT ((OVERSAMPLENR * 12.0)/(F_CPU / 64.0 / 256.0))
+        #define PID_dT ((OVERSAMPLENR * 12.0) / TEMP_TIMER_FREQUENCY)
       #endif
     #endif
 
@@ -244,7 +244,7 @@ class Temperature {
       static int cooler_maxttemp_raw;
     #endif
 
-    #if ENABLED(__SAM3X8E__)
+    #if ENABLED(ARDUINO_ARCH_SAM)
       // MEDIAN COUNT
       // For Smoother temperature
       // ONLY FOR DUE
@@ -287,7 +287,7 @@ class Temperature {
     /**
      * Static (class) methods
      */
-    static float analog2temp(int raw, uint8_t e);
+    static float analog2temp(int raw, uint8_t h);
     static float analog2tempBed(int raw);
     #if HAS(TEMP_CHAMBER)
       static float analog2tempChamber(int raw);
@@ -516,14 +516,14 @@ class Temperature {
     #if HAS(TEMP_COOLER)
       static void disable_all_coolers();
     #else
-      FORCE_INLINE void disable_all_coolers() {}
+      inline void disable_all_coolers() {}
     #endif
 
     /**
      * Perform auto-tuning for hotend, bed, chamber or cooler in response to M303
      */
     #if HAS(PID_HEATING) || HAS(PID_COOLING)
-      static void PID_autotune(float temp, int temp_controller, int ncycles, bool set_result=false);
+      static void PID_autotune(float temp, int temp_controller, int ncycles, bool storeValues=false);
     #endif
 
     /**
@@ -543,8 +543,8 @@ class Temperature {
 
     #if ENABLED(BABYSTEPPING)
 
-      static void babystep_axis(AxisEnum axis, int distance) {
-        #if MECH(COREXY) || MECH(COREYX)|| MECH(COREXZ) || MECH(COREZX)
+      static void babystep_axis(const AxisEnum axis, const int distance) {
+        #if IS_CORE
           #if ENABLED(BABYSTEP_XY)
             switch (axis) {
               case CORE_AXIS_1: // X on CoreXY and CoreXZ, Y on CoreYZ
@@ -552,17 +552,17 @@ class Temperature {
                 babystepsTodo[CORE_AXIS_2] += distance * 2;
                 break;
               case CORE_AXIS_2: // Y on CoreXY, Z on CoreXZ and CoreYZ
-                babystepsTodo[CORE_AXIS_1] += distance * 2;
-                babystepsTodo[CORE_AXIS_2] -= distance * 2;
+                babystepsTodo[CORE_AXIS_1] += CORESIGN(distance * 2);
+                babystepsTodo[CORE_AXIS_2] -= CORESIGN(distance * 2);
                 break;
               case NORMAL_AXIS: // Z on CoreXY, Y on CoreXZ, X on CoreYZ
                 babystepsTodo[NORMAL_AXIS] += distance;
                 break;
             }
-          #elif MECH(COREXZ) || MECH(COREZX)
+          #elif CORE_IS_XZ || CORE_IS_YZ
             // Only Z stepping needs to be handled here
-            babystepsTodo[CORE_AXIS_1] += distance * 2;
-            babystepsTodo[CORE_AXIS_2] -= distance * 2;
+            babystepsTodo[CORE_AXIS_1] += CORESIGN(distance * 2);
+            babystepsTodo[CORE_AXIS_2] -= CORESIGN(distance * 2);
           #else
             babystepsTodo[Z_AXIS] += distance;
           #endif
@@ -575,7 +575,7 @@ class Temperature {
 
   private:
 
-    #if ENABLED(__SAM3X8E__)
+    #if ENABLED(ARDUINO_ARCH_SAM)
       static int calc_raw_temp_value(uint8_t temp_id);
       #if HAS(TEMP_BED)
         static int calc_raw_temp_bed_value();

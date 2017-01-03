@@ -29,6 +29,7 @@
  * - Delta settings
  * - Endstop pullup resistors
  * - Endstops logic
+ * - Endstop Interrupts Feature
  * - Z probe Options
  * - Endstops min or max
  * - Stepper enable logic
@@ -40,6 +41,8 @@
  * - Axis relative mode
  * - Auto Bed Leveling (ABL)
  * - Auto Calibration
+ * - Auto Calibration 7 points
+ * - Delta Home Safe Zone
  * - Axis steps per unit
  * - Axis feedrate
  * - Axis accelleration
@@ -123,24 +126,24 @@
 #define DELTA_PRINTABLE_RADIUS 75.0         // mm
 
 //Endstop Offset Adjustment - All values are in mm and must be negative (to move down away from endstop switches) 
-#define TOWER_A_ENDSTOP_ADJ 0 // Front Left Tower
-#define TOWER_B_ENDSTOP_ADJ 0 // Front Right Tower
-#define TOWER_C_ENDSTOP_ADJ 0 // Rear Tower
+#define TOWER_A_ENDSTOP_ADJ 0   // Front Left Tower
+#define TOWER_B_ENDSTOP_ADJ 0   // Front Right Tower
+#define TOWER_C_ENDSTOP_ADJ 0   // Rear Tower
 
 //Tower Position Adjustment - Adj x Degrees around delta radius (- move clockwise / + move anticlockwise)
-#define TOWER_A_POSITION_ADJ 0 //Front Left Tower
-#define TOWER_B_POSITION_ADJ 0 //Front Right Tower
-#define TOWER_C_POSITION_ADJ 0 //Rear Tower
+#define TOWER_A_RADIUS_ADJ 0    // Front Left Tower
+#define TOWER_B_RADIUS_ADJ 0    // Front Right Tower
+#define TOWER_C_RADIUS_ADJ 0    // Rear Tower
 
 //Tower Radius Adjustment - Adj x mm in/out from centre of printer (- move in / + move out)
-#define TOWER_A_RADIUS_ADJ 0 //Front Left Tower
-#define TOWER_B_RADIUS_ADJ 0 //Front Right Tower
-#define TOWER_C_RADIUS_ADJ 0 //Rear Tower
+#define TOWER_A_POSITION_ADJ 0  // Front Left Tower
+#define TOWER_B_POSITION_ADJ 0  // Front Right Tower
+#define TOWER_C_POSITION_ADJ 0  // Rear Tower
 
 //Diagonal Rod Adjustment - Adj diag rod for Tower by x mm from DELTA_DIAGONAL_ROD value
-#define TOWER_A_DIAGROD_ADJ 0 //Front Left Tower
-#define TOWER_B_DIAGROD_ADJ 0 //Front Right Tower
-#define TOWER_C_DIAGROD_ADJ 0 //Rear Tower
+#define TOWER_A_DIAGROD_ADJ 0   // Front Left Tower
+#define TOWER_B_DIAGROD_ADJ 0   // Front Right Tower
+#define TOWER_C_DIAGROD_ADJ 0   // Rear Tower
 /*****************************************************************************************/
 
 
@@ -199,8 +202,20 @@
 #define Y_MAX_ENDSTOP_LOGIC   false   // set to true to invert the logic of the endstop.
 #define Z_MAX_ENDSTOP_LOGIC   false   // set to true to invert the logic of the endstop.
 #define Z2_MAX_ENDSTOP_LOGIC  false   // set to true to invert the logic of the endstop.
-#define Z_PROBE_ENDSTOP_LOGIC false   // set to true to invert the logic of the endstop.
+#define Z_PROBE_ENDSTOP_LOGIC false   // set to true to invert the logic of the probe.
 #define E_MIN_ENDSTOP_LOGIC   false   // set to true to invert the logic of the endstop.
+/*****************************************************************************************/
+
+
+/*****************************************************************************************
+ ***************************** Endstop Interrupts Feature ********************************
+ *****************************************************************************************
+ *                                                                                       *
+ * Enable this feature if all enabled endstop pins are interrupt-capable.                *
+ * This will remove the need to poll the interrupt pins, saving many CPU cycles.         *
+ *                                                                                       *
+ *****************************************************************************************/
+//#define ENDSTOP_INTERRUPTS_FEATURE
 /*****************************************************************************************/
 
 
@@ -271,22 +286,18 @@
 #define Z_PROBE_OFFSET_FROM_NOZZLE -1     // Z offset: -below [of the nozzle] (always negative!)
 
 // X and Y axis travel speed between probes, in mm/min
-#define XY_PROBE_SPEED  10000
+#define XY_PROBE_SPEED 10000
 // Z probe speed, in mm/min
-#define Z_PROBE_SPEED   3000
+#define Z_PROBE_SPEED 3000
 
 // Enable Z Probe Repeatability test to see how accurate your probe is
 //#define Z_MIN_PROBE_REPEATABILITY_TEST
 
-//
 // Probe Raise options provide clearance for the probe to deploy, stow, and travel.
-//
 #define Z_PROBE_DEPLOY_HEIGHT  30  // Z position for the probe to deploy/stow
 #define Z_PROBE_BETWEEN_HEIGHT 10  // Z position for travel between points
 
-//
 // For M666 give a range for adjusting the Z probe offset
-//
 #define Z_PROBE_OFFSET_RANGE_MIN -50
 #define Z_PROBE_OFFSET_RANGE_MAX  50
 /*****************************************************************************************/
@@ -376,14 +387,14 @@
 /*****************************************************************************************
  ******************************** Manual home positions **********************************
  *****************************************************************************************/
-// The position of the homing switches
-#define MANUAL_HOME_POSITIONS   // If defined, MANUAL_*_HOME_POS below will be used
-#define BED_CENTER_AT_0_0       // If defined, the center of the bed is at (X=0, Y=0)
+// The center of the bed is at (X=0, Y=0)
+//#define BED_CENTER_AT_0_0
 
-// Manual homing switch locations:
+// Manually set the home position. Leave these undefined for automatic settings.
+// For DELTA this is the top-center of the Cartesian print volume.
 #define MANUAL_X_HOME_POS 0
 #define MANUAL_Y_HOME_POS 0
-#define MANUAL_Z_HOME_POS 200      // Distance between nozzle and print surface after homing.
+#define MANUAL_Z_HOME_POS 200 // Distance between the nozzle to printbed after homing
 /*****************************************************************************************/
 
 
@@ -421,11 +432,9 @@
  *****************************************************************************************/
 //#define AUTO_BED_LEVELING_FEATURE
 
-/**
- * Enable detailed logging of G28, G29, G30, M48, etc.
- * Turn on with the command 'M111 S32'.
- * NOTE: Requires a lot of PROGMEM!
- */
+// Enable detailed logging of G28, G29, G30, M48, etc.
+// Turn on with the command 'M111 S32'.
+// NOTE: Requires a lot of PROGMEM!
 //#define DEBUG_LEVELING_FEATURE
 
 // Set the number of grid points per dimension
@@ -435,10 +444,19 @@
 // Probe along the Y axis, advancing X after each column
 //#define PROBE_Y_FIRST
 
-/**
- * Commands to execute at the end of G29 probing.
- * Useful to retract or move the Z probe out of the way.
- */
+// Gradually reduce leveling correction until a set height is reached,
+// at which point movement will be level to the machine's XY plane.
+// The height can be set with M320 Z<height>
+//#define ENABLE_LEVELING_FADE_HEIGHT
+
+// Experimental Subdivision of the grid by Catmull-Rom method.
+// Synthesizes intermediate points to produce a more detailed mesh.
+//#define ABL_BILINEAR_SUBDIVISION
+// Number of subdivisions between probe points
+#define BILINEAR_SUBDIVISIONS 3
+
+// Commands to execute at the end of G29 probing.
+// Useful to retract or move the Z probe out of the way.
 //#define Z_PROBE_END_SCRIPT "G1 Z10 F8000\nG1 X10 Y10\nG1 Z0.5"
 /*****************************************************************************************/
 
@@ -459,6 +477,29 @@
 
 
 /*****************************************************************************************
+ **************************** Auto Calibration 7 points **********************************
+ *****************************************************************************************
+ *                                                                                       *
+ * Autocalibration Delta system 7 points                                                  *
+ * To use this you must have a PROBE, please define you type probe.                      *
+ *                                                                                       *
+ *****************************************************************************************/
+//#define AUTO_CALIBRATION_7_POINT
+/*****************************************************************************************/
+
+
+/*****************************************************************************************
+ ********************************* Delta Home Safe Zone **********************************
+ *****************************************************************************************
+ *                                                                                       *
+ * After homing move down to a height where XY movement is unconstrained                 *
+ *                                                                                       *
+ *****************************************************************************************/
+//#define DELTA_HOME_TO_SAFE_ZONE
+/*****************************************************************************************/
+
+
+/*****************************************************************************************
  ********************************* Movement Settings *************************************
  *****************************************************************************************
  *                                                                                       *
@@ -469,8 +510,8 @@
  * Note that if EEPROM is enabled, saved values will override these.                     *
  *                                                                                       *
  *****************************************************************************************/
- 
- 
+
+
 /*****************************************************************************************
  ******************************* Axis steps per unit *************************************
  *****************************************************************************************
@@ -518,7 +559,8 @@
  ************************************* Axis jerk *****************************************
  *****************************************************************************************
  *                                                                                       *
- * Defult Jerk (mm/s)                                                                    *
+ * Default Jerk (mm/s)                                                                   *
+ * Override with M205 X Y Z E                                                            *
  *                                                                                       *
  * "Jerk" specifies the minimum speed change that requires acceleration.                 *
  * When changing speed and direction, if the difference is less than the                 *
