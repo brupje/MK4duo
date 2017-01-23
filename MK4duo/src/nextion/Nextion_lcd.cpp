@@ -47,7 +47,8 @@
   #include "Nextion_gfx.h"
   #include "nextion_lib/Nextion.h"
 
-  bool NextionON                    = false;
+  bool  NextionON                   = false,
+        show_Wave                   = true;
   uint8_t PageID                    = 0,
           lcd_status_message_level  = 0;
   uint16_t slidermaxval             = 20;
@@ -56,12 +57,11 @@
   static millis_t next_lcd_update_ms;
 
   #if ENABLED(SDSUPPORT)
-    uint8_t SDstatus    = 0; // 0 SD not insert, 1 SD insert, 2 SD printing
+    uint8_t SDstatus    = 0; // 0 card not present, 1 SD not insert, 2 SD insert, 3 SD printing
     NexUpload Firmware(NEXTION_FIRMWARE_FILE, 57600);
   #endif
 
   #if ENABLED(NEXTION_GFX)
-    //GFX gfx = GFX(20, 27, 200, 154);
     GFX gfx = GFX(1, 24, 250, 155);
   #endif
 
@@ -151,6 +151,8 @@
   NexPicture Folderup   = NexPicture    (3,   14, "p6");
   NexPicture ScrollUp   = NexPicture    (3,   18, "p7");
   NexPicture ScrollDown = NexPicture    (3,   19, "p8");
+  NexPicture sd_mount   = NexPicture    (3,   22, "p12");
+  NexPicture sd_dismount= NexPicture    (3,   23, "p13");
   NexSlider sdlist      = NexSlider     (3,   1,  "h0");
 
   /**
@@ -253,7 +255,7 @@
 
     // Page 3 touch listen
     &sdlist, &ScrollUp, &ScrollDown, &sdrow0, &sdrow1, &sdrow2,
-    &sdrow3, &sdrow4, &sdrow5, &Folderup,
+    &sdrow3, &sdrow4, &sdrow5, &Folderup, &sd_mount, &sd_dismount,
 
     // Page 4 touch listen
 
@@ -337,10 +339,11 @@
 
     #if ENABLED(SDSUPPORT)
       card.mount();
-      if (card.cardOK) {
+      if (card.cardOK)
+        SDstatus = 2;
+      else
         SDstatus = 1;
-        SD.setValue(1, "printer");
-      }
+      SD.setValue(SDstatus, "printer");
     #endif
 
     VSpeed.setValue(100, "printer");
@@ -371,13 +374,13 @@
 
     void printrowsd(uint8_t row, const bool folder, const char* filename) {
       if (folder) {
-        folder_list[row]->setShow();
+        folder_list[row]->SetVisibility(true);
         row_list[row]->attachPop(sdfolderPopCallback, row_list[row]);
       } else if (filename == "") {
-        folder_list[row]->setHide();
+        folder_list[row]->SetVisibility(false);
         row_list[row]->detachPop();
       } else {
-        folder_list[row]->setHide();
+        folder_list[row]->SetVisibility(false);
         row_list[row]->attachPop(sdfilePopCallback, row_list[row]);
       }
       row_list[row]->setText(filename);
@@ -389,12 +392,12 @@
       card.getWorkDirName();
 
       if (card.fileName[0] != '/') {
-        Folderup.setShow();
+        Folderup.SetVisibility(true);
         Folderup.attachPop(sdfolderUpPopCallback);
         sdfolder.setText(card.fileName);
       } else {
         Folderup.detachPop();
-        Folderup.setHide();
+        Folderup.SetVisibility(false);
         sdfolder.setText("");
       }
 
@@ -437,6 +440,23 @@
       sendCommand("ref 0");
 
       setrowsdcard();
+    }
+
+    void sdmountdismountPopCallback(void *ptr) {
+      if (ptr == &sd_mount) {
+        card.mount();
+        if (card.cardOK)
+          SDstatus = 2;
+        else
+          SDstatus = 1;
+        SD.setValue(SDstatus, "printer");
+      }
+      else {
+        card.unmount();
+        SDstatus = 1;
+        SD.setValue(SDstatus, "printer");
+      }
+      setpageSD();
     }
 
     void sdlistPopCallback(void *ptr) {
@@ -871,9 +891,13 @@
         gfx.color_set(NX_AXIS + Z_AXIS, 31);
         gfx.color_set(NX_MOVE, 2047);
         gfx.color_set(NX_TOOL, 65535);
+        gfx.color_set(NX_LOW, 2047);
+        gfx.color_set(NX_HIGH, 63488);
       #endif
 
       #if ENABLED(SDSUPPORT)
+        sd_mount.attachPop(sdmountdismountPopCallback, &sd_mount);
+        sd_dismount.attachPop(sdmountdismountPopCallback, &sd_dismount);
         sdlist.attachPop(sdlistPopCallback);
         ScrollUp.attachPop(sdlistPopCallback);
         ScrollDown.attachPop(sdlistPopCallback);
@@ -932,9 +956,9 @@
 
     heater_list0[h]->setValue(temp);
 
-    #if ENABLED(NEXTION_GFX)
-      if (!(print_job_counter.isRunning() || IS_SD_PRINTING) && !Wavetemp.GetSatus()) {
-        Wavetemp.setShow();
+    #if ENABLED(NEXTION_GFX) && ENABLED(NEXTION_WAVETEMP)
+      if (!(print_job_counter.isRunning() || IS_SD_PRINTING) && !Wavetemp.GetSatus() && show_Wave) {
+        Wavetemp.SetVisibility(true);
       }
     #endif
 
@@ -1069,9 +1093,9 @@
           #if ENABLED(SDSUPPORT)
 
             if (card.isFileOpen()) {
-              if (SDstatus != 2) {
-                SDstatus = 2;
-                SD.setValue(2);
+              if (SDstatus != 3) {
+                SDstatus = 3;
+                SD.setValue(SDstatus);
                 NPlay.setPic(28);
                 NStop.setPic(29);
               }
@@ -1098,15 +1122,15 @@
                 NStop.setPic(29);
               }
             }
-            else if (card.cardOK && SDstatus != 1) {
-              SDstatus = 1;
-              SD.setValue(1);
+            else if (card.cardOK && SDstatus != 2) {
+              SDstatus = 2;
+              SD.setValue(SDstatus);
               NPlay.setPic(27);
               NStop.setPic(30);
             }
-            else if (!card.cardOK && SDstatus != 0) {
-              SDstatus = 0;
-              SD.setValue(0);
+            else if (!card.cardOK && SDstatus != 1) {
+              SDstatus = 1;
+              SD.setValue(SDstatus);
               NPlay.setPic(27);
               NStop.setPic(30);
             }
@@ -1165,25 +1189,34 @@
     }
 
     void gfx_scale(const float scale) {
-      if ((PageID == 2) && (print_job_counter.isRunning() || IS_SD_PRINTING))
-        gfx.clear(scale);
+      gfx.set_scale(scale);
     }
 
-    void gfx_clear(const float x, const float y, const float z) {
-      if ((PageID == 2) && (print_job_counter.isRunning() || IS_SD_PRINTING)) {
-        Wavetemp.setHide();
+    void gfx_clear(const float x, const float y, const float z, bool force_clear) {
+      if (PageID == 2 && (print_job_counter.isRunning() || IS_SD_PRINTING || force_clear)) {
+        Wavetemp.SetVisibility(false);
+        show_Wave = !force_clear;
         gfx.clear(x, y, z);
       }
     }
 
-    void gfx_cursor_to(const float x, const float y, const float z) {
-      if ((PageID == 2) && (print_job_counter.isRunning() || IS_SD_PRINTING))
+    void gfx_cursor_to(const float x, const float y, const float z, bool force_cursor) {
+      if (PageID == 2 && (print_job_counter.isRunning() || IS_SD_PRINTING || force_cursor))
         gfx.cursor_to(x, y, z);
     }
 
     void gfx_line_to(const float x, const float y, const float z) {
-      if ((PageID == 2) && (print_job_counter.isRunning() || IS_SD_PRINTING))
+      if (PageID == 2 && (print_job_counter.isRunning() || IS_SD_PRINTING))
         gfx.line_to(NX_TOOL, x, y, z);
+    }
+
+    void gfx_plane_to(const float x, const float y, const float z) {
+      uint8_t color;
+      if (PageID == 2) {
+        if (z < 10) color = NX_LOW;
+        else color = NX_HIGH;
+        gfx.line_to(color, x, y, z, true);
+      }
     }
   #endif
 

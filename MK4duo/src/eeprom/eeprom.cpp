@@ -95,8 +95,8 @@
  *  M666  ABCIJK          deltaParams.tower_adj (float x6)
  *  M666  UVW             deltaParams.diagonal_rod_adj (float x3)
  *
- * Z_DUAL_ENDSTOPS:
- *  M666  Z               z_endstop_adj (float)
+ * Z_TWO_ENDSTOPS:
+ *  M666  Z               z2_endstop_adj (float)
  *
  * ULTIPANEL:
  *  M145  S0  H           lcd_preheat_hotend_temp (int x3)
@@ -299,8 +299,8 @@ void EEPROM::Postprocess() {
       EEPROM_WRITE(deltaParams.base_max_pos);
       EEPROM_WRITE(deltaParams.tower_adj);
       EEPROM_WRITE(deltaParams.diagonal_rod_adj);
-    #elif ENABLED(Z_DUAL_ENDSTOPS)
-      EEPROM_WRITE(z_endstop_adj);
+    #elif ENABLED(Z_TWO_ENDSTOPS)
+      EEPROM_WRITE(z2_endstop_adj);
     #endif
 
     #if DISABLED(ULTIPANEL)
@@ -481,7 +481,8 @@ void EEPROM::Postprocess() {
           EEPROM_READ(bilinear_start);        // 2 ints
           EEPROM_READ(bilinear_level_grid);   // 9 to 256 floats
           #if ENABLED(ABL_BILINEAR_SUBDIVISION)
-            bed_level_virt_prepare();
+            bilinear_grid_spacing_virt[X_AXIS] = bilinear_grid_spacing[X_AXIS] / (BILINEAR_SUBDIVISIONS);
+            bilinear_grid_spacing_virt[Y_AXIS] = bilinear_grid_spacing[Y_AXIS] / (BILINEAR_SUBDIVISIONS);
             bed_level_virt_interpolate();
           #endif
         }
@@ -514,7 +515,9 @@ void EEPROM::Postprocess() {
         EEPROM_READ(deltaParams.base_max_pos);
         EEPROM_READ(deltaParams.tower_adj);
         EEPROM_READ(deltaParams.diagonal_rod_adj);
-      #endif //DELTA
+      #elif ENABLED(Z_TWO_ENDSTOPS)
+        EEPROM_READ(z2_endstop_adj);
+      #endif
 
       #if DISABLED(ULTIPANEL)
         int lcd_preheat_hotend_temp[3], lcd_preheat_bed_temp[3], lcd_preheat_fan_speed[3];
@@ -776,7 +779,12 @@ void EEPROM::ResetDefault() {
     retract_recover_feedrate = RETRACT_RECOVER_FEEDRATE;
   #endif
 
-  volumetric_enabled = false;
+  #if ENABLED(VOLUMETRIC_DEFAULT_ON)
+    volumetric_enabled = true;
+  #else
+    volumetric_enabled = false;
+  #endif
+
   for (uint8_t q = 0; q < COUNT(filament_size); q++)
     filament_size[q] = DEFAULT_NOMINAL_FILAMENT_DIA;
 
@@ -951,13 +959,13 @@ void EEPROM::ResetDefault() {
       SERIAL_MV(" S", deltaParams.segments_per_second, 3);
       SERIAL_EMV(" H", deltaParams.base_max_pos[C_AXIS], 3);
 
-    #elif ENABLED(Z_DUAL_ENDSTOPS)
+    #elif ENABLED(Z_TWO_ENDSTOPS)
 
       CONFIG_MSG_START("Z2 Endstop adjustement (mm):");
-      SERIAL_LMV(CFG, "  M666 Z", z_endstop_adj );
+      SERIAL_LMV(CFG, "  M666 Z", z2_endstop_adj );
 
     #endif // DELTA
-    
+
     /**
      * Auto Bed Leveling
      */

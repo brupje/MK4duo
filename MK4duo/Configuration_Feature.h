@@ -27,6 +27,7 @@
  *
  * EXTRUDER FEATURES:
  * - Fan configuration
+ * - Volumetric extrusion
  * - Default nominal filament diameter
  * - Single nozzle
  * - BariCUDA paste extruder
@@ -45,6 +46,7 @@
  * - Software endstops
  * - Endstops only for homing
  * - Abort on endstop hit feature
+ * - G38.2 and G38.3 Probe Target
  * - Mesh Level Area
  * - R/C Servo
  * - Late Z axis
@@ -55,9 +57,9 @@
  * - Babystepping
  * - Firmware retract
  * - Dual X-carriage
- * - X-axis dual driver
- * - Y-axis dual driver
- * - Z-axis dual driver
+ * - X-axis two driver
+ * - Y-axis two driver
+ * - Z-axis two - three - four driver
  * - XY Frequency limit
  * - Skeinforge arc fix
  * SENSORS FEATURES:
@@ -160,6 +162,21 @@
 #define HOTEND_AUTO_FAN_SPEED       255  // 255 = full speed
 #define HOTEND_AUTO_FAN_MIN_SPEED     0
 /**************************************************************************/
+
+
+/***********************************************************************
+ ************************ Volumetric extrusion *************************
+ ***********************************************************************
+ *                                                                     *
+ * Volumetric extrusion default state                                  *
+ * Activate to make volumetric extrusion the default method,           *
+ * with DEFAULT NOMINAL FILAMENT DIA as the default diameter.          *
+ *                                                                     *
+ * M200 D0 to disable, M200 Dn to set a new diameter.                  *
+ *                                                                     *
+ ***********************************************************************/
+//#define VOLUMETRIC_DEFAULT_ON
+/***********************************************************************/
 
 
 /***********************************************************************
@@ -514,6 +531,22 @@
 
 
 /**************************************************************************
+ ********************* G38.2 and G38.3 Probe Target ***********************
+ **************************************************************************
+ *                                                                        *
+ * Probe target - similar to G28 except it uses the Z_MIN endstop         *
+ * for all three axes                                                     *
+ *                                                                        *
+ **************************************************************************/
+//#define G38_PROBE_TARGET
+
+// minimum distance in mm that will produce a move
+// (determined using the print statement in check_move)
+#define G38_MINIMUM_MOVE 0.0275
+/**************************************************************************/
+
+
+/**************************************************************************
  *************************** Mesh Level Area ******************************
  **************************************************************************
  *                                                                        *
@@ -544,7 +577,7 @@
 // With this option servos are powered only during movement, then turned off to prevent jitter.
 //#define DEACTIVATE_SERVOS_AFTER_MOVE
 
-// Delay (in microseconds) before turning the servo off. This depends on the servo speed.
+// Delay (in milliseconds) before turning the servo off. This depends on the servo speed.
 // 300ms is a good value but you can try less delay.
 // If the servo can't reach the requested position, increase it.
 #define SERVO_DEACTIVATION_DELAY 300
@@ -714,20 +747,14 @@
 
 
 /*****************************************************************************************
- ********************************** X-axis dual driver ***********************************
+ ********************************** X-axis two driver ************************************
  *****************************************************************************************
  *                                                                                       *
  * A single X stepper driver is usually used to drive 2 stepper motors.                  *
  * Uncomment this define to utilize a separate stepper driver for each X axis motor.     *
- * Only a few motherboards support this, like RAMPS,                                     *
- * which have dual extruder support (the 2nd, often unused, extruder driver is used      *
- * to control the 2nd X axis stepper motor).                                             *
- * The pins are currently only defined for a RAMPS motherboards.                         *
- * On a RAMPS (or other 5 driver) motherboard, using this feature will limit you         *
- * to using 1 extruder.                                                                  *
  *                                                                                       *
  *****************************************************************************************/
-//#define X_DUAL_STEPPER_DRIVERS
+//#define X_TWO_STEPPER
 
 // Define if the two X drives need to rotate in opposite directions
 #define INVERT_X2_VS_X_DIR false
@@ -735,20 +762,14 @@
 
 
 /*****************************************************************************************
- ********************************** Y-axis dual driver ***********************************
+ ********************************** Y-axis two driver ************************************
  *****************************************************************************************
  *                                                                                       *
  * A single Y stepper driver is usually used to drive 2 stepper motors.                  *
  * Uncomment this define to utilize a separate stepper driver for each Y axis motor.     *
- * Only a few motherboards support this, like RAMPS,                                     *
- * which have dual extruder support (the 2nd, often unused, extruder driver is used      *
- * to control the 2nd Y axis stepper motor).                                             *
- * The pins are currently only defined for a RAMPS motherboards.                         *
- * On a RAMPS (or other 5 driver) motherboard, using this feature will limit you         *
- * to using 1 extruder.                                                                  *
  *                                                                                       *
  *****************************************************************************************/
-//#define Y_DUAL_STEPPER_DRIVERS
+//#define Y_TWO_STEPPER
 
 // Define if the two Y drives need to rotate in opposite directions
 #define INVERT_Y2_VS_Y_DIR false
@@ -756,30 +777,23 @@
 
 
 /*****************************************************************************************
- ********************************** Z-axis dual driver ***********************************
+ ************************** Z-axis two - three - four  driver ****************************
  *****************************************************************************************
  *                                                                                       *
  * A single Z stepper driver is usually used to drive 2 stepper motors.                  *
  * Uncomment this define to utilize a separate stepper driver for each Z axis motor.     *
- * Only a few motherboards support this, like RAMPS,                                     *
- * which have dual extruder support (the 2nd, often unused, extruder driver is used      *
- * to control the 2nd Z axis stepper motor).                                             *
- * The pins are currently only defined for a RAMPS motherboards.                         *
- * On a RAMPS (or other 5 driver) motherboard, using this feature will limit you         *
- * to using 1 extruder.                                                                  *
  *                                                                                       *
  *****************************************************************************************/
-//#define Z_DUAL_STEPPER_DRIVERS
+//#define Z_TWO_STEPPER
+//#define Z_THREE_STEPPER
+//#define Z_FOUR_STEPPER
 
-// Z DUAL ENDSTOPS is a feature to enable the use of 2 endstops for both Z steppers - Let's call them Z stepper and Z2 stepper.
-// That way the machine is capable to align the bed during home, since both Z steppers are homed. 
-// There is also an implementation of M666 (software endstops adjustment) to this feature.
-// After Z homing, this adjustment is applied to just one of the steppers in order to align the bed.
-// One just need to home the Z axis and measure the distance difference between both Z axis and apply the math: Z adjust = Z - Z2.
-// If the Z stepper axis is closer to the bed, the measure Z > Z2 (yes, it is.. think about it) and the Z adjust would be positive.
-// Play a little bit with small adjustments (0.5mm) and check the behaviour.
-// The M119 (endstops report) will start reporting the Z2 Endstop as well.
-//#define Z_DUAL_ENDSTOPS
+// Z TWO ENDSTOPS is a feature to enable the use of 2 endstops for both Z steppers
+//#define Z_TWO_ENDSTOPS
+// Z THREE ENDSTOPS is a feature to enable the use of 3 endstops for three Z steppers
+//#define Z_THREE_ENDSTOPS
+// Z FOUR ENDSTOPS is a feature to enable the use of 4 endstops for four Z steppers
+//#define Z_FOUR_ENDSTOPS
 /*****************************************************************************************/
 
 
@@ -857,6 +871,8 @@
 #define FIL_RUNOUT_PIN_INVERTING true
 // Uncomment to use internal pullup for pin if the sensor is defined.
 //#define ENDSTOPPULLUP_FIL_RUNOUT
+// Time for double check switch in millisecond. Set 0 for disabled
+#define FILAMENT_RUNOUT_DOUBLE_CHECK 0
 // Script execute when filament run out
 #define FILAMENT_RUNOUT_SCRIPT "M600"
 /**********************************************************************************/
@@ -1132,7 +1148,6 @@
 //#define INVERT_BACK_BUTTON            // Option for invert back button logic if avaible
 
 // Encoder Direction Options
-
 // Test your encoder's behavior first with both options disabled.
 //
 //  Reversed Value Edit and Menu Nav? Enable REVERSE_ENCODER_DIRECTION.
@@ -1147,6 +1162,12 @@
 //  If CLOCKWISE normally moves DOWN this makes it go UP.
 //  If CLOCKWISE normally moves UP this makes it go DOWN.
 //#define REVERSE_MENU_DIRECTION
+
+#define ENCODER_RATE_MULTIPLIER         // If defined, certain menu edit operations automatically multiply the steps when the encoder is moved quickly
+#define ENCODER_10X_STEPS_PER_SEC 75    // If the encoder steps per sec exceeds this value, multiply steps moved x10 to quickly advance the value
+#define ENCODER_100X_STEPS_PER_SEC 160  // If the encoder steps per sec exceeds this value, multiply steps moved x100 to really quickly advance the value
+
+#define ULTIPANEL_FEEDMULTIPLY          // Comment to disable setting feedrate multiplier via encoder
 
 // SPEAKER/BUZZER
 // If you have a speaker that can produce tones, enable it here.
@@ -1295,6 +1316,10 @@
 // SSD1306 OLED full graphics generic display
 //
 //#define U8GLIB_SSD1306
+
+// WANHAO D6 SSD1309 OLED full graphics
+//
+//#define WANHAO_D6_OLED
 
 // SAV OLEd LCD module support using either SSD1306 or SH1106 based LCD modules
 //
@@ -1522,6 +1547,9 @@
 // ref pins are connected to a digital trimpot on supported boards)
 // Values 0-255 (RAMBO 135 = ~0.75A, 185 = ~1A)
 #define DIGIPOT_MOTOR_CURRENT {135, 135, 135, 135, 135}
+
+// Motor Current for XY, Z, E in mA
+#define PWM_MOTOR_CURRENT {1200, 1000, 1000}
 /***********************************************************************/
 
 

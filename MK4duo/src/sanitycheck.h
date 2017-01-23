@@ -534,10 +534,10 @@
  */
 #if MECH(DELTA)
   #if ABL_GRID
-    #if (ABL_GRID_POINTS_X & 1) == 0 || (ABL_GRID_POINTS_Y & 1) == 0
-      #error "DELTA requires ABL_GRID_POINTS_X and ABL_GRID_POINTS_Y to be odd numbers."
+    #if (AUTO_BED_LEVELING_GRID_POINTS & 1) == 0
+      #error "DELTA requires AUTO_BED_LEVELING_GRID_POINTS to be odd numbers."
     #elif ABL_GRID_POINTS_X < 3
-      #error "DELTA requires ABL_GRID_POINTS_X and ABL_GRID_POINTS_Y to be 3 or higher."
+      #error "DELTA requires AUTO_BED_LEVELING_GRID_POINTS to be 3 or higher."
     #endif
   #endif
 
@@ -833,7 +833,7 @@
     #error DEPENDENCY ERROR: Missing setting DEFAULT_DUPLICATION_X_OFFSET
   #endif
 #endif
-#if ENABLED(Y_DUAL_STEPPER_DRIVERS)
+#if ENABLED(Y_TWO_STEPPER)
   #if DISABLED(INVERT_Y2_VS_Y_DIR)
     #error DEPENDENCY ERROR: Missing setting INVERT_Y2_VS_Y_DIR
   #endif
@@ -1278,17 +1278,23 @@
 #endif
 
 //Machines
-#if DISABLED(X_MIN_ENDSTOP_LOGIC)
+#if DISABLED(X_MIN_ENDSTOP_LOGIC) && NOMECH(DELTA)
   #error DEPENDENCY ERROR: Missing setting X_MIN_ENDSTOP_LOGIC
 #endif
-#if DISABLED(Y_MIN_ENDSTOP_LOGIC)
+#if DISABLED(Y_MIN_ENDSTOP_LOGIC) && NOMECH(DELTA)
   #error DEPENDENCY ERROR: Missing setting Y_MIN_ENDSTOP_LOGIC
 #endif
-#if DISABLED(Z_MIN_ENDSTOP_LOGIC)
+#if DISABLED(Z_MIN_ENDSTOP_LOGIC) && NOMECH(DELTA)
   #error DEPENDENCY ERROR: Missing setting Z_MIN_ENDSTOP_LOGIC
 #endif
-#if DISABLED(Z2_MIN_ENDSTOP_LOGIC)
+#if DISABLED(Z2_MIN_ENDSTOP_LOGIC) && NOMECH(DELTA)
   #error DEPENDENCY ERROR: Missing setting Z2_MIN_ENDSTOP_LOGIC
+#endif
+#if DISABLED(Z3_MIN_ENDSTOP_LOGIC) && NOMECH(DELTA)
+  #error DEPENDENCY ERROR: Missing setting Z3_MIN_ENDSTOP_LOGIC
+#endif
+#if DISABLED(Z4_MIN_ENDSTOP_LOGIC) && NOMECH(DELTA)
+  #error DEPENDENCY ERROR: Missing setting Z4_MIN_ENDSTOP_LOGIC
 #endif
 #if DISABLED(X_MAX_ENDSTOP_LOGIC)
   #error DEPENDENCY ERROR: Missing setting X_MAX_ENDSTOP_LOGIC
@@ -1299,8 +1305,14 @@
 #if DISABLED(Z_MAX_ENDSTOP_LOGIC)
   #error DEPENDENCY ERROR: Missing setting Z_MAX_ENDSTOP_LOGIC
 #endif
-#if DISABLED(Z2_MAX_ENDSTOP_LOGIC)
+#if DISABLED(Z2_MAX_ENDSTOP_LOGIC) && NOMECH(DELTA)
   #error DEPENDENCY ERROR: Missing setting Z2_MAX_ENDSTOP_LOGIC
+#endif
+#if DISABLED(Z3_MAX_ENDSTOP_LOGIC) && NOMECH(DELTA)
+  #error DEPENDENCY ERROR: Missing setting Z3_MAX_ENDSTOP_LOGIC
+#endif
+#if DISABLED(Z4_MAX_ENDSTOP_LOGIC) && NOMECH(DELTA)
+  #error DEPENDENCY ERROR: Missing setting Z4_MAX_ENDSTOP_LOGIC
 #endif
 #if DISABLED(Z_PROBE_ENDSTOP_LOGIC)
   #error DEPENDENCY ERROR: Missing setting Z_PROBE_ENDSTOP_LOGIC
@@ -1596,10 +1608,14 @@
 #endif
 
 /**
- * Dual Stepper Drivers
+ * Two or plus Z Stepper
  */
-#if ENABLED(Z_DUAL_STEPPER_DRIVERS) && ENABLED(Y_DUAL_STEPPER_DRIVERS)
-  #error CONFLICT ERROR: You cannot have dual stepper drivers for both Y and Z.
+#if ENABLED(Z_TWO_STEPPER)
+  #if ENABLED(Z_THREE_STEPPER) || ENABLED(Z_FOUR_STEPPER)
+    #error "CONFLICT ERROR: You cannot have two Z stepper and three or four drivers".
+  #endif
+#elif ENABLED(Z_THREE_STEPPER) && ENABLED(Z_FOUR_STEPPER)
+  #error "CONFLICT ERROR: You cannot have three Z stepper and four drivers".
 #endif
 
 /**
@@ -1990,4 +2006,15 @@
 
 #if ENABLED(Z_PROBE_SLED) && !PIN_EXISTS(SLED)
   #error DEPENDENCY ERROR: You have to set SLED_PIN to a valid pin if you enable Z_PROBE_SLED
+#endif
+
+/**
+ * G38 Probe Target
+ */
+#if ENABLED(G38_PROBE_TARGET)
+  #if !HAS_BED_PROBE
+    #error "G38_PROBE_TARGET requires a bed probe."
+  #elif !IS_CARTESIAN
+    #error "G38_PROBE_TARGET requires a Cartesian machine."
+  #endif
 #endif

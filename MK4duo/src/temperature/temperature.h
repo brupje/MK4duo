@@ -51,15 +51,15 @@ class Temperature {
                  target_temperature_bed;
 
     #if HAS(TEMP_CHAMBER)
-      static float current_temperature_chamber = 0.0;
-      static int   target_temperature_chamber = 0,
-                   current_temperature_chamber_raw = 0;
+      static float current_temperature_chamber;
+      static int   target_temperature_chamber,
+                   current_temperature_chamber_raw;
     #endif
 
     #if HAS(TEMP_COOLER)
-      static float current_temperature_cooler = 0.0;
-      static int   target_temperature_cooler = 0,
-                   current_temperature_cooler_raw = 0;
+      static float current_temperature_cooler;
+      static int   target_temperature_cooler,
+                   current_temperature_cooler_raw;
     #endif
 
     #if ENABLED(TEMP_SENSOR_1_AS_REDUNDANT)
@@ -74,9 +74,9 @@ class Temperature {
 
     #if ENABLED(PIDTEMP) || ENABLED(PIDTEMPBED) || ENABLED(PIDTEMPCHAMBER) || ENABLED(PIDTEMPCOOLER)
       #if ENABLED(ARDUINO_ARCH_SAM)
-        #define PID_dT (((OVERSAMPLENR + 2) * 14.0) / TEMP_TIMER_FREQUENCY)
+        #define PID_dT (((OVERSAMPLENR + 2) * 12.0) / (TEMP_TIMER_FREQUENCY * PID_dT_FACTOR))
       #else
-        #define PID_dT ((OVERSAMPLENR * 12.0) / TEMP_TIMER_FREQUENCY)
+        #define PID_dT ((OVERSAMPLENR * 12.0) / (TEMP_TIMER_FREQUENCY * PID_dT_FACTOR))
       #endif
     #endif
 
@@ -97,11 +97,11 @@ class Temperature {
     #endif
 
     #if ENABLED(PIDTEMPCHAMBER)
-      extern float chamberKp, chamberKi, chamberKd;
+      static float chamberKp, chamberKi, chamberKd;
     #endif
 
     #if ENABLED(PIDTEMPCOOLER)
-      extern float coolerKp, coolerKi, coolerKd;
+      static float coolerKp, coolerKi, coolerKd;
     #endif
 
     #if ENABLED(BABYSTEPPING)
@@ -265,6 +265,14 @@ class Temperature {
     #endif
 
     static uint8_t soft_pwm[HOTENDS];
+
+    #if HAS(TEMP_CHAMBER)
+      static uint8_t soft_pwm_chamber;
+    #endif
+
+    #if HAS(TEMP_COOLER)
+      static uint8_t soft_pwm_cooler;
+    #endif
 
     #if ENABLED(FAN_SOFT_PWM)
       static uint8_t soft_pwm_fan;
@@ -604,11 +612,11 @@ class Temperature {
     #endif
 
     #if ENABLED(PIDTEMPCHAMBER)
-      float get_pid_output_chamber();
+      static float get_pid_output_chamber();
     #endif
 
     #if ENABLED(PIDTEMPCOOLER)
-      float get_pid_output_cooler();
+      static float get_pid_output_cooler();
     #endif
 
     static void _temp_error(int tc, const char* serial_msg, const char* lcd_msg);

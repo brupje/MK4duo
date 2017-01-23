@@ -438,7 +438,7 @@ uint16_t max_display_update_time = 0;
   inline void lcd_wait_for_homing() {
     no_reentrance = true;
     while (!axis_homed[X_AXIS] || !axis_homed[Y_AXIS] || !axis_homed[Z_AXIS]) idle();
-    no_reentrance = true;
+    no_reentrance = false;
   }
 
   void lcd_return_to_status() { lcd_goto_screen(lcd_status_screen); }
@@ -773,7 +773,7 @@ void kill_screen(const char* lcd_msg) {
     long babysteps_done = 0;
 
     void _lcd_babystep(const AxisEnum axis, const char* msg) {
-      if (lcd_clicked) { defer_return_to_status = false; lcd_goto_previous_menu(); return; }
+      if (lcd_clicked) { defer_return_to_status = false; return lcd_goto_previous_menu(); }
       ENCODER_DIRECTION_NORMAL();
       if (encoderPosition) {
         int babystep_increment = (int32_t)encoderPosition * (BABYSTEP_MULTIPLICATOR);
@@ -1012,7 +1012,7 @@ void kill_screen(const char* lcd_msg) {
     void lcd_extrude(float length, float feedrate) {
       current_position[E_AXIS] += length;
       #if MECH(DELTA)
-        inverse_kinematics(current_position);
+        deltaParams.inverse_kinematics_DELTA(current_position);
         planner.buffer_line(delta[X_AXIS], delta[Y_AXIS], delta[Z_AXIS], current_position[E_AXIS], feedrate, active_extruder, active_driver);
       #else
         planner.buffer_line(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS], feedrate, active_extruder, active_driver);
@@ -1118,7 +1118,7 @@ void kill_screen(const char* lcd_msg) {
 
   #if TEMP_SENSOR_0 != 0 && (TEMP_SENSOR_1 != 0 || TEMP_SENSOR_2 != 0 || TEMP_SENSOR_3 != 0 || TEMP_SENSOR_BED != 0)
 
-    static void lcd_preheat_material1_menu() {
+    void lcd_preheat_material1_menu() {
       START_MENU();
       MENU_BACK(MSG_PREPARE);
       #if HOTENDS == 1
@@ -1140,7 +1140,7 @@ void kill_screen(const char* lcd_msg) {
       END_MENU();
     }
 
-    static void lcd_preheat_material2_menu() {
+    void lcd_preheat_material2_menu() {
       START_MENU();
       MENU_BACK(MSG_PREPARE);
       #if HOTENDS == 1
@@ -1162,7 +1162,7 @@ void kill_screen(const char* lcd_msg) {
       END_MENU();
     }
 
-    static void lcd_preheat_material3_menu() {
+    void lcd_preheat_material3_menu() {
       START_MENU();
       MENU_BACK(MSG_PREPARE);
       #if HOTENDS == 1
@@ -1187,16 +1187,18 @@ void kill_screen(const char* lcd_msg) {
   #endif // TEMP_SENSOR_0 && (TEMP_SENSOR_1 || TEMP_SENSOR_2 || TEMP_SENSOR_3 || TEMP_SENSOR_BED)
 
   void lcd_cooldown() {
+    fanSpeed = 0;
     thermalManager.disable_all_heaters();
     thermalManager.disable_all_coolers();
-    fanSpeed = 0;
     lcd_return_to_status();
   }
 
   #if ENABLED(SDSUPPORT) && ENABLED(MENU_ADDAUTOSTART)
+
     void lcd_autostart_sd() {
       card.checkautostart(true);
     }
+
   #endif
 
   #if ENABLED(MANUAL_BED_LEVELING)
@@ -1207,7 +1209,7 @@ void kill_screen(const char* lcd_msg) {
      *
      */
 
-    uint8_t _lcd_level_bed_position;
+    static uint8_t _lcd_level_bed_position;
 
     // Utility to go to the next mesh point
     // A raise is added between points if MIN_Z_HEIGHT_FOR_HOMING is in use
@@ -1371,8 +1373,8 @@ KeepDrawing:
         #endif
       ;
       if (no_reentrance) return;
-      lcd_wait_for_homing();
-      lcd_goto_screen(_lcd_level_bed_homing_done);
+      if (axis_homed[X_AXIS] && axis_homed[Y_AXIS] && axis_homed[Z_AXIS])
+        lcd_goto_screen(_lcd_level_bed_homing_done);
     }
 
     /**
@@ -1493,7 +1495,7 @@ KeepDrawing:
     // Cooldown
     //
     bool has_heat = false;
-    HOTEND_LOOP() if (thermalManager.target_temperature[h]) { has_heat = true; break; }
+    HOTEND_LOOP() if (thermalManager.target_temperature[h]) has_heat = true;
     #if HAS(TEMP_BED)
       if (thermalManager.target_temperature_bed) has_heat = true;
     #endif
@@ -1650,7 +1652,7 @@ KeepDrawing:
       // This assumes the center is 0,0
       #if MECH(DELTA)
         if (axis != Z_AXIS) {
-          max = sqrt(sq(DELTA_PRINTABLE_RADIUS) - sq(current_position[Y_AXIS - axis]));
+          max = SQRT(sq(DELTA_PRINTABLE_RADIUS) - sq(current_position[Y_AXIS - axis]));
           min = -max;
         }
       #endif
@@ -2607,7 +2609,6 @@ KeepDrawing:
   #endif // LCD_INFO_MENU
 
   #if ENABLED(FILAMENT_CHANGE_FEATURE)
-
     void lcd_filament_change_toocold_menu() {
       START_MENU();
       STATIC_ITEM(MSG_HEATING_FAILED_LCD, true, true);
@@ -2831,6 +2832,7 @@ KeepDrawing:
         case X_AXIS: lcd_move_x(); break;
         case Y_AXIS: lcd_move_y(); break;
         case Z_AXIS: lcd_move_z();
+        default: break;
       }
     }
     void reprapworld_keypad_move_z_up()    { _reprapworld_keypad_move(Z_AXIS,  1); }
@@ -2940,24 +2942,21 @@ void lcd_init() {
 
   #if ENABLED(NEWPANEL)
     #if BUTTON_EXISTS(EN1)
-      SET_INPUT(BTN_EN1);
-      PULLUP(BTN_EN1);
+      SET_INPUT_PULLUP(BTN_EN1);
     #endif
 
     #if BUTTON_EXISTS(EN2)
-      SET_INPUT(BTN_EN2);
-      PULLUP(BTN_EN2);
+      SET_INPUT_PULLUP(BTN_EN2);
     #endif
 
     #if BUTTON_EXISTS(ENC)
-      SET_INPUT(BTN_ENC);
-      PULLUP(BTN_ENC);
+      SET_INPUT_PULLUP(BTN_ENC);
     #endif
 
     #if ENABLED(REPRAPWORLD_KEYPAD)
       SET_OUTPUT(SHIFT_CLK);
       OUT_WRITE(SHIFT_LD, HIGH);
-      PULLUP(SHIFT_OUT);
+      SET_INPUT_PULLUP(SHIFT_OUT);
     #endif
 
     #if BUTTON_EXISTS(UP)
@@ -2982,14 +2981,13 @@ void lcd_init() {
       SET_OUTPUT(SHIFT_CLK);
       OUT_WRITE(SHIFT_LD, HIGH);
       OUT_WRITE(SHIFT_EN, LOW);
-      PULLUP(SHIFT_OUT);
+      SET_INPUT_PULLUP(SHIFT_OUT);
     #endif // SR_LCD_2W_NL
 
   #endif // !NEWPANEL
 
   #if ENABLED(SDSUPPORT) && PIN_EXISTS(SD_DETECT)
-    SET_INPUT(SD_DETECT_PIN);
-    PULLUP(SD_DETECT_PIN);
+    SET_INPUT_PULLUP(SD_DETECT_PIN);
     lcd_sd_status = 2; // UNKNOWN
   #endif
 
@@ -3007,7 +3005,11 @@ void lcd_init() {
 int lcd_strlen(const char* s) {
   int i = 0, j = 0;
   while (s[i]) {
-    if ((s[i] & 0xc0) != 0x80) j++;
+    #if ENABLED(MAPPER_NON)
+      j++;
+    #else
+      if ((s[i] & 0xC0u) != 0x80u) j++;
+    #endif
     i++;
   }
   return j;
@@ -3016,7 +3018,11 @@ int lcd_strlen(const char* s) {
 int lcd_strlen_P(const char* s) {
   int j = 0;
   while (pgm_read_byte(s)) {
-    if ((pgm_read_byte(s) & 0xc0) != 0x80) j++;
+    #if ENABLED(MAPPER_NON)
+      j++;
+    #else
+      if ((pgm_read_byte(s) & 0xC0u) != 0x80u) j++;
+    #endif
     s++;
   }
   return j;
@@ -3179,7 +3185,7 @@ void lcd_update() {
 
     // We arrive here every ~100ms when idling often enough.
     // Instead of tracking the changes simply redraw the Info Screen ~1 time a second.
-    static uint8_t lcd_status_update_delay = 1; // first update one loop delayed
+    static int8_t lcd_status_update_delay = 1; // first update one loop delayed
     if (
       #if ENABLED(ULTIPANEL)
         currentScreen == lcd_status_screen &&
@@ -3271,7 +3277,6 @@ void lcd_update() {
             break;
         } // switch
       }
-
   } // ELAPSED(ms, next_lcd_update_ms)
 }
 
@@ -3289,7 +3294,7 @@ void set_utf_strlen(char* s, uint8_t n) {
   s[i] = '\0';
 }
 
-void lcd_finishstatus(bool persist = false) {
+void lcd_finishstatus(bool persist=false) {
   set_utf_strlen(lcd_status_message, LCD_WIDTH);
   #if !(ENABLED(LCD_PROGRESS_BAR) && (PROGRESS_MSG_EXPIRE > 0))
     UNUSED(persist);

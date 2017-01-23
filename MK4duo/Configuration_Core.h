@@ -111,10 +111,14 @@
 //#define ENDSTOPPULLUP_YMIN
 //#define ENDSTOPPULLUP_ZMIN
 //#define ENDSTOPPULLUP_Z2MIN
+//#define ENDSTOPPULLUP_Z3MIN
+//#define ENDSTOPPULLUP_Z4MIN
 //#define ENDSTOPPULLUP_XMAX
 //#define ENDSTOPPULLUP_YMAX
 //#define ENDSTOPPULLUP_ZMAX
 //#define ENDSTOPPULLUP_Z2MAX
+//#define ENDSTOPPULLUP_Z3MAX
+//#define ENDSTOPPULLUP_Z4MAX
 //#define ENDSTOPPULLUP_ZPROBE
 //#define ENDSTOPPULLUP_EMIN
 #endif
@@ -133,10 +137,14 @@
 #define Y_MIN_ENDSTOP_LOGIC   false   // set to true to invert the logic of the endstop.
 #define Z_MIN_ENDSTOP_LOGIC   false   // set to true to invert the logic of the endstop.
 #define Z2_MIN_ENDSTOP_LOGIC  false   // set to true to invert the logic of the endstop.
+#define Z3_MIN_ENDSTOP_LOGIC  false   // set to true to invert the logic of the endstop.
+#define Z4_MIN_ENDSTOP_LOGIC  false   // set to true to invert the logic of the endstop.
 #define X_MAX_ENDSTOP_LOGIC   false   // set to true to invert the logic of the endstop.
 #define Y_MAX_ENDSTOP_LOGIC   false   // set to true to invert the logic of the endstop.
 #define Z_MAX_ENDSTOP_LOGIC   false   // set to true to invert the logic of the endstop.
 #define Z2_MAX_ENDSTOP_LOGIC  false   // set to true to invert the logic of the endstop.
+#define Z3_MAX_ENDSTOP_LOGIC  false   // set to true to invert the logic of the endstop.
+#define Z4_MAX_ENDSTOP_LOGIC  false   // set to true to invert the logic of the endstop.
 #define Z_PROBE_ENDSTOP_LOGIC false   // set to true to invert the logic of the probe.
 #define E_MIN_ENDSTOP_LOGIC   false   // set to true to invert the logic of the endstop.
 /*****************************************************************************************/

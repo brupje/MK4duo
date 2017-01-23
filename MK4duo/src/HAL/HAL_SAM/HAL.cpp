@@ -39,7 +39,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  *
- * Description:          *** HAL for Arduino Due ***
+ * Description: HAL for Arduino Due and compatible (SAM3X8E)
  *
  * Contributors:
  * Copyright (c) 2014 Bob Cousins bobcousins42@googlemail.com
@@ -91,24 +91,15 @@ HAL::~HAL() {
   // dtor
 }
 
-// Print apparent cause of start/restart
-void HAL::showStartReason() {
-  int mcu = (RSTC->RSTC_SR & RSTC_SR_RSTTYP_Msk) >> RSTC_SR_RSTTYP_Pos;
-  switch (mcu) {
-    case 0:
-      Com::printInfoLN(Com::tPowerUp);
-      break;
-    case 1:
-      // this is return from backup mode on SAM
-      Com::printInfoLN(Com::tBrownOut);
-    case 2:
-      Com::printInfoLN(Com::tWatchdog);
-      break;
-    case 3:
-      Com::printInfoLN(Com::tSoftwareReset);
-      break;
-    case 4:
-      Com::printInfoLN(Com::tExternalReset);
+uint8_t HAL::get_reset_source() {
+  switch ((RSTC->RSTC_SR >> 8) & 7) {
+    case 0: return RST_POWER_ON; break;
+    case 1: return RST_BACKUP; break;
+    case 2: return RST_WATCHDOG; break;
+    case 3: return RST_SOFTWARE; break;
+    case 4: return RST_EXTERNAL; break;
+    default:
+      return 0;
   }
 }
 
@@ -417,9 +408,9 @@ void HAL::resetHardware() {
 
 #ifdef SPI_EEPROM
 
-  #define CMD_WREN  6 // WREN
-  #define CMD_READ  3 // READ
-  #define CMD_WRITE 2 // WRITE
+  static constexpr uint8_t CMD_WREN   = 6;  // WREN
+  static constexpr uint8_t CMD_READ   = 3;  // READ
+  static constexpr uint8_t CMD_WRITE  = 2;  // WRITE
 
   uint8_t eeprom_read_byte(uint8_t* pos) {
     uint8_t eeprom_temp[3] = {0};
@@ -502,6 +493,8 @@ void HAL::resetHardware() {
   }
 
 #else // !SPI_EEPROM
+
+  #include <Wire.h>
 
   static bool eeprom_initialised = false;
   static uint8_t eeprom_device_address = 0x50;
@@ -591,7 +584,7 @@ void HAL::resetHardware() {
 
 #endif // I2C_EEPROM
 
-void HAL_timer_start(uint8_t timer_num, uint8_t priority, uint32_t frequency, uint32_t clock, uint8_t prescale) {
+void HAL_timer_start(const uint8_t timer_num, const uint8_t priority, const uint32_t frequency, const uint32_t clock, const uint8_t prescale) {
   // Get the ISR from table
   Tc *tc = TimerConfig[timer_num].pTimerRegs;
   uint32_t channel = TimerConfig[timer_num].channel;
@@ -611,13 +604,13 @@ void HAL_timer_start(uint8_t timer_num, uint8_t priority, uint32_t frequency, ui
   NVIC_EnableIRQ(irq);
 }
 
-void HAL_timer_enable_interrupt(uint8_t timer_num) {
+void HAL_timer_enable_interrupt(const uint8_t timer_num) {
   const tTimerConfig *pConfig = &TimerConfig[timer_num];
   pConfig->pTimerRegs->TC_CHANNEL[pConfig->channel].TC_IER = TC_IER_CPCS; // enable interrupt on timer match with register C
   pConfig->pTimerRegs->TC_CHANNEL[pConfig->channel].TC_IDR = ~TC_IER_CPCS; // remove disable interrupt
 }
 
-void HAL_timer_disable_interrupt (uint8_t timer_num) {
+void HAL_timer_disable_interrupt (const uint8_t timer_num) {
 	const tTimerConfig *pConfig = &TimerConfig [timer_num];
 	pConfig->pTimerRegs->TC_CHANNEL [pConfig->channel].TC_IDR = TC_IER_CPCS; //disable interrupt
 }

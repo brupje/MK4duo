@@ -178,9 +178,13 @@
 #define HAS_Y_MIN (PIN_EXISTS(Y_MIN))
 #define HAS_Y_MAX (PIN_EXISTS(Y_MAX))
 #define HAS_Z_MIN (PIN_EXISTS(Z_MIN))
-#define HAS_Z_MAX (PIN_EXISTS(Z_MAX))
 #define HAS_Z2_MIN (PIN_EXISTS(Z2_MIN))
+#define HAS_Z3_MIN (PIN_EXISTS(Z3_MIN))
+#define HAS_Z4_MIN (PIN_EXISTS(Z4_MIN))
+#define HAS_Z_MAX (PIN_EXISTS(Z_MAX))
 #define HAS_Z2_MAX (PIN_EXISTS(Z2_MAX))
+#define HAS_Z3_MAX (PIN_EXISTS(Z3_MAX))
+#define HAS_Z4_MAX (PIN_EXISTS(Z4_MAX))
 #define HAS_Z_PROBE_PIN (PIN_EXISTS(Z_PROBE))
 #define HAS_E_MIN (PIN_EXISTS(E_MIN))
 #define HAS_SOLENOID_1 (PIN_EXISTS(SOL1))
@@ -200,6 +204,8 @@
 #define HAS_Y2_ENABLE (PIN_EXISTS(Y2_ENABLE))
 #define HAS_Z_ENABLE (PIN_EXISTS(Z_ENABLE))
 #define HAS_Z2_ENABLE (PIN_EXISTS(Z2_ENABLE))
+#define HAS_Z3_ENABLE (PIN_EXISTS(Z3_ENABLE))
+#define HAS_Z4_ENABLE (PIN_EXISTS(Z4_ENABLE))
 #define HAS_E0_ENABLE (PIN_EXISTS(E0_ENABLE))
 #define HAS_E1_ENABLE (PIN_EXISTS(E1_ENABLE))
 #define HAS_E2_ENABLE (PIN_EXISTS(E2_ENABLE))
@@ -212,6 +218,8 @@
 #define HAS_Y2_DIR (PIN_EXISTS(Y2_DIR))
 #define HAS_Z_DIR (PIN_EXISTS(Z_DIR))
 #define HAS_Z2_DIR (PIN_EXISTS(Z2_DIR))
+#define HAS_Z3_DIR (PIN_EXISTS(Z3_DIR))
+#define HAS_Z4_DIR (PIN_EXISTS(Z4_DIR))
 #define HAS_E0_DIR (PIN_EXISTS(E0_DIR))
 #define HAS_E1_DIR (PIN_EXISTS(E1_DIR))
 #define HAS_E2_DIR (PIN_EXISTS(E2_DIR))
@@ -224,6 +232,8 @@
 #define HAS_Y2_STEP (PIN_EXISTS(Y2_STEP))
 #define HAS_Z_STEP (PIN_EXISTS(Z_STEP))
 #define HAS_Z2_STEP (PIN_EXISTS(Z2_STEP))
+#define HAS_Z3_STEP (PIN_EXISTS(Z3_STEP))
+#define HAS_Z4_STEP (PIN_EXISTS(Z4_STEP))
 #define HAS_E0_STEP (PIN_EXISTS(E0_STEP))
 #define HAS_E1_STEP (PIN_EXISTS(E1_STEP))
 #define HAS_E2_STEP (PIN_EXISTS(E2_STEP))
@@ -237,10 +247,10 @@
 #define HAS_EX2 (PIN_EXISTS(EX2_CHOICE))
 #define HAS_BTN_BACK (PIN_EXISTS(BTN_BACK))
 #define HAS_POWER_SWITCH (POWER_SUPPLY > 0 && PIN_EXISTS(PS_ON))
-#define HAS_MOTOR_CURRENT_PWM_XY (PIN_EXISTS(MOTOR_CURRENT_PWM_XY))
 #define HAS_LCD (ENABLED(ULTRA_LCD) || ENABLED(NEXTION))
 #define HAS_SDSUPPORT (ENABLED(SDSUPPORT))
 #define HAS_DIGIPOTSS (PIN_EXISTS(DIGIPOTSS))
+#define HAS_MOTOR_CURRENT_PWM_XY (PIN_EXISTS(MOTOR_CURRENT_PWM_XY))
 #define HAS_MOTOR_CURRENT_PWM (PIN_EXISTS(MOTOR_CURRENT_PWM_XY) || PIN_EXISTS(MOTOR_CURRENT_PWM_Z) || PIN_EXISTS(MOTOR_CURRENT_PWM_E))
 #define HAS_THERMALLY_PROTECTED_BED (HAS_TEMP_BED && HAS_HEATER_BED && ENABLED(THERMAL_PROTECTION_BED))
 #define HAS_DONDOLO (ENABLED(DONDOLO_SINGLE_MOTOR) || ENABLED(DONDOLO_DUAL_MOTOR))
@@ -259,6 +269,10 @@
 #define HAS_PID_HEATING (ENABLED(PIDTEMP) || ENABLED(PIDTEMPBED) || ENABLED(PIDTEMPCHAMBER))
 #define HAS_PID_FOR_BOTH (ENABLED(PIDTEMP) && ENABLED(PIDTEMPBED))
 #define HAS_PID_COOLING (ENABLED(PIDTEMPCOOLER))
+
+#if ENABLED(ARDUINO_ARCH_SAM) && (DISABLED(PID_dT_FACTOR) || PID_dT_FACTOR <= 0)
+  #define PID_dT_FACTOR 1
+#endif
 
 /**
  * ENDSTOPPULLUPS
@@ -368,8 +382,6 @@
   #if HAS(Z_PROBE_PIN)
     #define TEST_BLTOUCH() _TEST_BLTOUCH(Z_PROBE)
   #else
-    #undef Z_MIN_ENDSTOP_INVERTING
-    #define Z_MIN_ENDSTOP_INVERTING false
     #define TEST_BLTOUCH() _TEST_BLTOUCH(Z_MIN)
   #endif
 #endif
@@ -438,24 +450,25 @@
 #endif
 
 /**
- * MAX_STEP_FREQUENCY differs for TOSHIBA OR ARDUINO DUE OR ARDUINO MEGA
+ * DOUBLE_STEP_FREQUENCY for Arduino DUE or Mega
  */
 #if ENABLED(ARDUINO_ARCH_SAM)
-  #if ENABLED(CONFIG_STEPPERS_TOSHIBA)
-    #define MAX_STEP_FREQUENCY 150000 // Max step frequency for Toshiba Stepper Controllers
-    #define DOUBLE_STEP_FREQUENCY MAX_STEP_FREQUENCY
+  #if ENABLED(ADVANCE) || ENABLED(LIN_ADVANCE)
+    #define DOUBLE_STEP_FREQUENCY 60000 // 60KHz
   #else
-    #define MAX_STEP_FREQUENCY 320000     // Max step frequency for the Due is approx. 330kHz
-    #define DOUBLE_STEP_FREQUENCY 90000  // 96kHz is close to maximum for an Arduino Due
+    #define DOUBLE_STEP_FREQUENCY 80000 // 80Khz
   #endif
 #else
-  #if ENABLED(CONFIG_STEPPERS_TOSHIBA)
-    #define MAX_STEP_FREQUENCY 10000 // Max step frequency for Toshiba Stepper Controllers
-    #define DOUBLE_STEP_FREQUENCY MAX_STEP_FREQUENCY
-  #else
-    #define MAX_STEP_FREQUENCY 40000 // Max step frequency for Arduino mega
-    #define DOUBLE_STEP_FREQUENCY 10000
-  #endif
+  #define DOUBLE_STEP_FREQUENCY 10000
+#endif
+
+/**
+ * MAX_STEP_FREQUENCY differs for TOSHIBA
+ */
+#if ENABLED(CONFIG_STEPPERS_TOSHIBA)
+  #define MAX_STEP_FREQUENCY DOUBLE_STEP_FREQUENCY // Max step frequency for Toshiba Stepper Controllers, 96kHz is close to maximum for an Arduino Due
+#else
+  #define MAX_STEP_FREQUENCY (DOUBLE_STEP_FREQUENCY * 4) // Max step frequency for the Due is approx. 330kHz
 #endif
 
 // MS1 MS2 Stepper Driver Microstepping mode table
@@ -765,23 +778,6 @@
 
 // Stepper pulse duration, in cycles
 #define STEP_PULSE_CYCLES ((MINIMUM_STEPPER_PULSE) * CYCLES_PER_MICROSECOND)
-
-// NEXTION
-#if ENABLED(NEXTION)
-  #if NEXTION_SERIAL == 1
-    #define nexSerial Serial1
-  #elif NEXTION_SERIAL == 2
-    #define nexSerial Serial2
-  #elif NEXTION_SERIAL == 3
-    #define nexSerial Serial3
-  #else
-    #define nexSerial Serial1
-  #endif
-
-  #define dbSerialPrint(a)    {}
-  #define dbSerialPrintln(a)  {}
-  #define dbSerialBegin(a)    {}
-#endif // NEXTION
 
 // MUVE 3D
 #if MECH(MUVE3D) && ENABLED(PROJECTOR_PORT) && ENABLED(PROJECTOR_BAUDRATE)
