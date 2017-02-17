@@ -19,12 +19,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+ 
+ 
 #include "../../base.h"
+
+#if ENABLED(ETHERNET)
+
 #include <UIPEthernet.h>
 #include <Arduino.h>
 
 
-#if ENABLED(ETHERNET)
 
 static char command_queue[ETHERNET_BUFSIZE][MAX_CMD_SIZE];
 static uint8_t commands_in_queue=0	
