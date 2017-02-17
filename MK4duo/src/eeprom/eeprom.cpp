@@ -669,9 +669,7 @@ void EEPROM::ResetDefault() {
     "Offsets for the first hotend must be 0.0."
   );
   LOOP_XYZ(i) {
-    HOTEND_LOOP() {
-      hotend_offset[i][h] = tmp10[i][h];
-    }
+    HOTEND_LOOP() hotend_offset[i][h] = tmp10[i][h];
   }
 
   planner.acceleration = DEFAULT_ACCELERATION;
@@ -730,12 +728,7 @@ void EEPROM::ResetDefault() {
   #endif
 
   #if ENABLED(PIDTEMP)
-    #if HOTENDS > 1
-      HOTEND_LOOP()
-    #else
-      int h = 0; UNUSED(h); // only need to write once
-    #endif
-    {
+    HOTEND_LOOP() {
       PID_PARAM(Kp, h) = tmp6[h];
       PID_PARAM(Ki, h) = scalePID_i(tmp7[h]);
       PID_PARAM(Kd, h) = scalePID_d(tmp8[h]);
@@ -824,7 +817,7 @@ void EEPROM::ResetDefault() {
     #endif
     SERIAL_E;
     #if EXTRUDERS > 1
-      for (uint8_t i = 0; i < EXTRUDERS; i++) {
+      for (int8_t i = 0; i < EXTRUDERS; i++) {
         SERIAL_SMV(CFG, "  M92 T", i);
         SERIAL_EMV(" E", planner.axis_steps_per_mm[E_AXIS + i], 3);
       }
@@ -839,7 +832,7 @@ void EEPROM::ResetDefault() {
     #endif
     SERIAL_E;
     #if EXTRUDERS > 1
-      for (uint8_t i = 0; i < EXTRUDERS; i++) {
+      for (int8_t i = 0; i < EXTRUDERS; i++) {
         SERIAL_SMV(CFG, "  M203 T", i);
         SERIAL_EMV(" E", planner.max_feedrate_mm_s[E_AXIS + i], 3);
       }
@@ -854,7 +847,7 @@ void EEPROM::ResetDefault() {
     #endif
     SERIAL_E;
     #if EXTRUDERS > 1
-      for (uint8_t i = 0; i < EXTRUDERS; i++) {
+      for (int8_t i = 0; i < EXTRUDERS; i++) {
         SERIAL_SMV(CFG, "  M201 T", i);
         SERIAL_EMV(" E", planner.max_acceleration_mm_per_s2[E_AXIS + i]);
       }
@@ -868,7 +861,7 @@ void EEPROM::ResetDefault() {
     #endif
     SERIAL_E;
     #if EXTRUDERS > 1
-      for (uint8_t i = 0; i < EXTRUDERS; i++) {
+      for (int8_t i = 0; i < EXTRUDERS; i++) {
         SERIAL_SMV(CFG, "  M204 T", i);
         SERIAL_EMV(" R", planner.retract_acceleration[i], 3);
       }
@@ -886,7 +879,7 @@ void EEPROM::ResetDefault() {
     #endif
     SERIAL_E;
     #if (EXTRUDERS > 1)
-      for(uint8_t i = 0; i < EXTRUDERS; i++) {
+      for(int8_t i = 0; i < EXTRUDERS; i++) {
         SERIAL_SMV(CFG, "  M205 T", i);
         SERIAL_EMV(" E" , planner.max_jerk[E_AXIS + i], 3);
       }
@@ -899,8 +892,8 @@ void EEPROM::ResetDefault() {
 
     #if HOTENDS > 1
       CONFIG_MSG_START("Hotend offset (mm):");
-      for (uint8_t h = 1; h < HOTENDS; h++) {
-        SERIAL_SMV(CFG, "  M218 T", h);
+      for (int8_t h = 1; h < HOTENDS; h++) {
+        SERIAL_SMV(CFG, "  M218 H", h);
         SERIAL_MV(" X", hotend_offset[X_AXIS][h], 3);
         SERIAL_MV(" Y", hotend_offset[Y_AXIS][h], 3);
         SERIAL_EMV(" Z", hotend_offset[Z_AXIS][h], 3);
@@ -921,8 +914,8 @@ void EEPROM::ResetDefault() {
 
       for (uint8_t py = 1; py <= MESH_NUM_Y_POINTS; py++) {
         for (uint8_t px = 1; px <= MESH_NUM_X_POINTS; px++) {
-          SERIAL_SMV(CFG, "  G29 S3 X", px);
-          SERIAL_MV(" Y", py);
+          SERIAL_SMV(CFG, "  G29 S3 X", (int)px);
+          SERIAL_MV(" Y", (int)py);
           SERIAL_EMV(" Z", mbl.z_values[py-1][px-1], 5);
         }
       }
@@ -930,8 +923,8 @@ void EEPROM::ResetDefault() {
 
     #if HEATER_USES_AD595
       CONFIG_MSG_START("AD595 Offset and Gain:");
-      for (uint8_t h = 0; h < HOTENDS; h++) {
-        SERIAL_SMV(CFG, "  M595 T", h);
+      for (int8_t h = 0; h < HOTENDS; h++) {
+        SERIAL_SMV(CFG, "  M595 H", h);
         SERIAL_MV(" O", ad595_offset[h]);
         SERIAL_EMV(", S", ad595_gain[h]);
       }
@@ -976,8 +969,8 @@ void EEPROM::ResetDefault() {
 
     #if ENABLED(ULTIPANEL)
       CONFIG_MSG_START("Material heatup parameters:");
-      for (uint8_t i = 0; i < COUNT(lcd_preheat_hotend_temp); i++) {
-        SERIAL_SMV(CFG, "  M145 S", (int)i);
+      for (int8_t i = 0; i < COUNT(lcd_preheat_hotend_temp); i++) {
+        SERIAL_SMV(CFG, "  M145 S", i);
         SERIAL_MV(" H", lcd_preheat_hotend_temp[i]);
         SERIAL_MV(" B", lcd_preheat_bed_temp[i]);
         SERIAL_MV(" F", lcd_preheat_fan_speed[i]);
@@ -988,7 +981,7 @@ void EEPROM::ResetDefault() {
     #if ENABLED(PIDTEMP) || ENABLED(PIDTEMPBED) || ENABLED(PIDTEMPCHAMBER) || ENABLED(PIDTEMPCOOLER)
       CONFIG_MSG_START("PID settings:");
       #if ENABLED(PIDTEMP)
-        for (uint8_t h = 0; h < HOTENDS; h++) {
+        for (int8_t h = 0; h < HOTENDS; h++) {
           SERIAL_SMV(CFG, "  M301 H", h);
           SERIAL_MV(" P", PID_PARAM(Kp, h));
           SERIAL_MV(" I", unscalePID_i(PID_PARAM(Ki, h)));

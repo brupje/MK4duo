@@ -66,16 +66,19 @@
   #include "Configuration_Overall.h"
 #endif
 
-#include "src/language/language.h"
-
 #if ENABLED(LASERBEAM)
   #include "Configuration_Laser.h"
+#endif
+
+#if ENABLED(CNCROUTER)
+  #include "Configuration_CNCRouter.h"
 #endif
 
 #include "src/conditionals_pre.h"
 #include "src/pins.h"
 #include "src/conditionals_post.h"
 #include "src/sanitycheck.h"
+#include "src/language/language.h"
 #include "src/HAL/HAL.h"
 #include "src/enum.h"
 
@@ -99,7 +102,11 @@
   #endif
   #include "src/laser/laser.h"
 #endif
-  
+
+#if ENABLED(CNCROUTER)
+  #include "src/cncrouter/cncrouter.h"
+#endif
+
 #include "src/eeprom/eeprom.h"
 #include "src/printcounter/duration_t.h"
 #include "src/printcounter/printcounter.h"

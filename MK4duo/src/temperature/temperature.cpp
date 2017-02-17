@@ -997,7 +997,7 @@ void Temperature::manage_temp_controller() {
       }
     #endif
 
-  } // Hotends Loop
+  } // HOTEND_LOOP
 
   #if HAS(AUTO_FAN)
     if (ELAPSED(ms, next_auto_fan_check_ms)) { // only need to check fan state very infrequently
@@ -1182,7 +1182,7 @@ float Temperature::analog2temp(int raw, uint8_t h) {
   }
 
   #if HEATER_USES_AD595
-    return ((raw * (((HAL_VOLTAGE_PIN) * 100.0 / 1024.0) / OVERSAMPLENR) * ad595_gain[h]) + ad595_offset[h];
+    return ((raw * (((HAL_VOLTAGE_PIN) * 100.0) / 1024.0) / OVERSAMPLENR) * ad595_gain[h]) + ad595_offset[h];
   #else
     return 0;
   #endif
@@ -1288,9 +1288,8 @@ void Temperature::updateTemperaturesFromRawValues() {
   #if ENABLED(HEATER_0_USES_MAX6675)
     current_temperature_raw[0] = read_max6675();
   #endif
-  HOTEND_LOOP() {
+  HOTEND_LOOP()
     current_temperature[h] = analog2temp(current_temperature_raw[h], h);
-  }
   current_temperature_bed = analog2tempBed(current_temperature_bed_raw);
   #if HAS(TEMP_CHAMBER)
     current_temperature_chamber = analog2tempChamber(current_temperature_chamber_raw);
@@ -1400,10 +1399,7 @@ void Temperature::init() {
   #endif
 
   // Finish init of mult hotend arrays
-  HOTEND_LOOP() {
-    // populate with the first value
-    maxttemp[h] = maxttemp[0];
-  }
+  HOTEND_LOOP() maxttemp[h] = maxttemp[0];
 
   #if ENABLED(PIDTEMP) && ENABLED(PID_ADD_EXTRUSION_RATE)
     last_e_position = 0;
@@ -2180,7 +2176,14 @@ HAL_TEMP_TIMER_ISR {
   Temperature::isr();
 }
 
+volatile bool Temperature::in_temp_isr = false;
+
 void Temperature::isr() {
+  // The stepper ISR can interrupt this ISR. When it does it re-enables this ISR
+  // at the end of its run, potentially causing re-entry. This flag prevents it.
+  if (in_temp_isr) return;
+  in_temp_isr = true;
+
   // Allow UART and stepper ISRs
   DISABLE_TEMP_INTERRUPT(); // Disable Temperature ISR
   sei();
@@ -2778,6 +2781,16 @@ void Temperature::isr() {
       if (!endstop_monitor_count) endstop_monitor();  // report changes in endstop status
     }
   #endif
-  
-  ENABLE_TEMP_INTERRUPT(); // re-enable Temperature ISR
+
+  #if ENABLED(ENDSTOP_INTERRUPTS_FEATURE)
+
+    extern volatile uint8_t e_hit;
+
+    if (e_hit && ENDSTOPS_ENABLED) {
+      endstops.update();  // call endstop update routine
+      e_hit--;
+    }
+  #endif
+
+  CLI_ENABLE_TEMP_INTERRUPT(); // re-enable Temperature ISR
 }

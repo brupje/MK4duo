@@ -29,12 +29,12 @@
 
 #include "thermistortables.h"
 
+#define HOTEND_LOOP() for (int8_t h = 0; h < HOTENDS; h++)
+
 #if HOTENDS <= 1
-  #define HOTEND_LOOP() const int8_t h = 0;
   #define HOTEND_INDEX  0
   #define EXTRUDER_IDX  0
 #else
-  #define HOTEND_LOOP() for (int8_t h = 0; h < HOTENDS; h++)
   #define HOTEND_INDEX  h
   #define EXTRUDER_IDX  active_extruder
 #endif
@@ -61,6 +61,8 @@ class Temperature {
       static int   target_temperature_cooler,
                    current_temperature_cooler_raw;
     #endif
+
+    static volatile bool in_temp_isr;
 
     #if ENABLED(TEMP_SENSOR_1_AS_REDUNDANT)
       static float redundant_temperature;

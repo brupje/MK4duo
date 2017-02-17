@@ -38,6 +38,9 @@
   #ifdef M100_FREE_MEMORY_WATCHER
     #undef M100_FREE_MEMORY_WATCHER
   #endif
+  #if ENABLED(EMERGENCY_PARSER)
+    #undef EMERGENCY_PARSER
+  #endif
 #endif
 
 /**
@@ -146,6 +149,7 @@
 #define HAS_HEATER_BED (PIN_EXISTS(HEATER_BED))
 #define HAS_HEATER_CHAMBER (PIN_EXISTS(HEATER_CHAMBER))
 #define HAS_COOLER     (PIN_EXISTS(COOLER))
+#define HAS_CNCROUTER  (PIN_EXISTS(CNCROUTER))
 #define HAS_AUTO_FAN_0 (ENABLED(HOTEND_AUTO_FAN) && PIN_EXISTS(H0_AUTO_FAN))
 #define HAS_AUTO_FAN_1 (ENABLED(HOTEND_AUTO_FAN) && PIN_EXISTS(H1_AUTO_FAN))
 #define HAS_AUTO_FAN_2 (ENABLED(HOTEND_AUTO_FAN) && PIN_EXISTS(H2_AUTO_FAN))
@@ -419,6 +423,13 @@
 #endif
 
 /**
+ * Z probe repetitions
+ */
+#if DISABLED(Z_PROBE_REPETITIONS)
+  #define Z_PROBE_REPETITIONS 1
+#endif
+
+/**
  * Sled Options
  */
 #if ENABLED(Z_PROBE_SLED)
@@ -668,6 +679,14 @@
     #define WRITE_FAN(v) WRITE(FAN_PIN, v)
   #endif
 #endif
+#if HAS(CNCROUTER)
+  #if ENABLED(INVERTED_CNCROUTER_PIN)
+    #define WRITE_CNCROUTER(v) WRITE(CNCROUTER_PIN, !v)
+  #else
+    #define WRITE_CNCROUTER(v) WRITE(CNCROUTER_PIN, v)
+  #endif
+#endif
+
 #if ENABLED(MKR4) || ENABLED(MKR6)
   #if ENABLED(INVERTED_RELE_PINS)
     #define WRITE_RELE(pin, value) WRITE(pin, !value)

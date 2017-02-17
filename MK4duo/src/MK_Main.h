@@ -29,7 +29,7 @@
 void get_command();
 
 void idle(
-  #if ENABLED(FILAMENT_CHANGE_FEATURE)
+  #if ENABLED(FILAMENT_CHANGE_FEATURE) || ENABLED(CNCROUTER)
     bool no_stepper_sleep=false  // pass true to keep steppers from disabling on timeout
   #endif
 );
@@ -79,6 +79,9 @@ void quickstop_stepper();
 
 extern uint8_t mk_debug_flags;
 
+// Printer Mode
+extern PrinterMode printer_mode;
+
 extern bool Running;
 inline bool IsRunning() { return  Running; }
 inline bool IsStopped() { return !Running; }
@@ -101,7 +104,7 @@ inline void refresh_cmd_timeout() { previous_cmd_ms = millis(); }
 
 extern void safe_delay(millis_t ms);
 
-#if ENABLED(FAST_PWM_FAN) || ENABLED(FAST_PWM_COOLER)
+#if ENABLED(FAST_PWM_FAN) || ENABLED(FAST_PWM_COOLER) || ENABLED(FAST_PWM_CNCROUTER)
   void setPwmFrequency(uint8_t pin, uint8_t val);
 #endif
 
@@ -126,7 +129,7 @@ extern float position_shift[XYZ];
 extern float home_offset[XYZ];
 extern float hotend_offset[XYZ][HOTENDS];
 
-#if HAS(LCD)
+#if ENABLED(EMERGENCY_PARSER) || HAS(LCD)
   extern volatile bool wait_for_user;
 #endif
 
@@ -189,6 +192,7 @@ float code_value_temp_diff();
 
 #if HAS(BED_PROBE)
   extern float zprobe_zoffset;
+  extern bool probe_process;
 #endif
 
 #if ENABLED(HOST_KEEPALIVE_FEATURE)
@@ -278,15 +282,17 @@ extern uint8_t active_driver;
   void print_flowratestate();
 #endif
 
-#if ENABLED(FIRMWARE_TEST)
-  void FirmwareTest();
-#endif
-
 #if ENABLED(COLOR_MIXING_EXTRUDER)
   extern float mixing_factor[MIXING_STEPPERS];
 #endif
 
 void calculate_volumetric_multipliers();
+
+void tool_change(const uint8_t tmp_extruder, const float fr_mm_s = 0.0, bool no_move = false);
+
+#if ENABLED(CNCROUTER)
+  void tool_change_cnc(const uint8_t tool_id);
+#endif
 
 /**
  * Blocking movement and shorthand functions

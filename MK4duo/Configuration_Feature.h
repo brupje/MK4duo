@@ -81,6 +81,7 @@
  * - Laser beam
  * - Ethernet
 =======
+ * - CNC Router
  * - Case Light
 
  * ADVANCED MOTION FEATURES:
@@ -486,7 +487,11 @@
                                             // Filament can be extruded repeatedly from the filament exchange menu to fill the hotend,
                                             // or until outcoming filament color is not clear for filament color change
 #define FILAMENT_CHANGE_EXTRUDE_FEEDRATE 5  // Extrude filament feedrate in mm/s - must be slower than load feedrate
-#define FILAMENT_CHANGE_PRINTER_OFF 5       // Minutes
+#define FILAMENT_CHANGE_NOZZLE_TIMEOUT 45L  // Turn off nozzle if user doesn't change filament within this time limit in seconds
+#define FILAMENT_CHANGE_PRINTER_OFF 5L      // Turn off printer if user doesn't change filament within this time limit in Minutes
+#define FILAMENT_CHANGE_NUMBER_OF_BEEPS 5L  // Number of alert beeps before printer goes quiet
+#define FILAMENT_CHANGE_NO_STEPPER_TIMEOUT  // Enable to have stepper motors hold position during filament change
+                                            // even if it takes longer than DEFAULT_STEPPER_DEACTIVE_TIME.
 /**************************************************************************/
 
 
@@ -1460,6 +1465,18 @@
 
 /**************************************************************************/
 
+
+
+/**************************************************************************
+ ******************************* CNC Router *******************************
+ **************************************************************************
+ *                                                                        *
+ * Support for CNC Router                                                 *
+ * Check also Configuration_CNCRouter.h
+ *                                                                        *
+ **************************************************************************/
+//#define CNCROUTER
+/**************************************************************************/
 
 
 /**************************************************************************
