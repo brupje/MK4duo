@@ -5487,6 +5487,7 @@ inline void gcode_G28() {
       endstops.not_homing();
       report_current_position();
 
+
     }
     else {
 
@@ -5511,6 +5512,7 @@ inline void gcode_G28() {
 
       SERIAL_E;
     }
+
 
     clean_up_after_endstop_or_probe_move();
 
