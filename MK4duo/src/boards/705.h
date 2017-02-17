@@ -63,6 +63,14 @@
 #define KILL_PIN              -1
 #define SUICIDE_PIN           -1
 
+#define DAC0_SYNC             53 // PB14
+#define SPI_CHAN_DAC 1
+
+#define SPI_CHAN_EEPROM1 -1
+#define SPI_EEPROM1_CS -1
+#define SPI_EEPROM2_CS -1
+#define SPI_FLASH_CS -1
+
 #define ORIG_HEATER_BED_PIN    2
 #define ORIG_HEATER_0_PIN      3
 #define ORIG_HEATER_1_PIN      8
