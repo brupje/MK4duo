@@ -46,6 +46,7 @@
   #include "Nextion_lcd.h"
   #include "Nextion_gfx.h"
   #include "library/Nextion.h"
+  #include <cstdarg>
 
   bool        NextionON                 = false,
               show_Wave                 = true,
