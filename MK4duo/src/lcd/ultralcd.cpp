@@ -241,7 +241,7 @@ uint16_t max_display_update_time = 0;
   void menu_action_setting_edit_bool(const char* pstr, bool* ptr);
   void menu_action_setting_edit_callback_bool(const char* pstr, bool* ptr, screenFunc_t callbackFunc);
 
-  #if HAS_SDSUPPORT
+  #if HAS_SD_SUPPORT
     void lcd_sdcard_menu();
     void menu_action_sdfile(const char* longFilename);
     void menu_action_sddirectory(const char* longFilename);
@@ -722,7 +722,7 @@ void lcd_reset_status() {
   const char *msg;
   if (print_job_counter.isPaused())
     msg = paused;
-  #if HAS_SDSUPPORT
+  #if HAS_SD_SUPPORT
     else if (IS_SD_PRINTING)
       return lcd_setstatus(card.fileName, true);
   #endif
@@ -789,7 +789,7 @@ void lcd_quick_feedback(const bool clear_buttons) {
     line_to_current_z();
   }
 
-  #if HAS_SDSUPPORT
+  #if HAS_SD_SUPPORT
 
     void lcd_sdcard_pause() {
       card.pauseSDPrint();
@@ -995,7 +995,7 @@ void lcd_quick_feedback(const bool clear_buttons) {
    *
    */
 
-  #if HAS_SDSUPPORT && ENABLED(MENU_ADDAUTOSTART)
+  #if HAS_SD_SUPPORT && ENABLED(MENU_ADDAUTOSTART)
 
     void lcd_autostart_sd() { card.beginautostart(); }
 
@@ -1037,7 +1037,7 @@ void lcd_quick_feedback(const bool clear_buttons) {
         MENU_ITEM_EDIT_CALLBACK(bool, MSG_CASE_LIGHT, (bool*)&caselight.status, caselight.update);
     #endif
 
-    #if HAS_SDSUPPORT
+    #if HAS_SD_SUPPORT
       if (card.isOK()) {
         if (card.isFileOpen()) {
           if (IS_SD_PRINTING)
@@ -2624,6 +2624,13 @@ void lcd_quick_feedback(const bool clear_buttons) {
     }
 
     //
+    // TMC Z Calibration
+    //
+    #if ENABLED(TMC_Z_CALIBRATION)
+      MENU_ITEM(gcode, MSG_TMC_Z_CALIBRATION, PSTR("G28\nM915"));
+    #endif
+
+    //
     // Level Bed
     //
     #if ENABLED(AUTO_BED_LEVELING_UBL)
@@ -2974,8 +2981,9 @@ void lcd_quick_feedback(const bool clear_buttons) {
     }
   }
 
-  void lcd_move_e() { _lcd_move_e(); }
-  #if EXTRUDERS > 1
+  #if EXTRUDERS == 1
+    void lcd_move_e() { _lcd_move_e(); }
+  #elif EXTRUDERS > 1
     void lcd_move_e0() { _lcd_move_e(0); }
     void lcd_move_e1() { _lcd_move_e(1); }
     #if EXTRUDERS > 2
@@ -3034,8 +3042,9 @@ void lcd_quick_feedback(const bool clear_buttons) {
   void lcd_move_get_x_amount()            { _lcd_move_distance_menu(X_AXIS, lcd_move_x); }
   void lcd_move_get_y_amount()            { _lcd_move_distance_menu(Y_AXIS, lcd_move_y); }
   void lcd_move_get_z_amount()            { _lcd_move_distance_menu(Z_AXIS, lcd_move_z); }
-  void lcd_move_get_e_amount()            { _lcd_move_distance_menu(E_AXIS, lcd_move_e); }
-  #if EXTRUDERS > 1
+  #if EXTRUDERS == 1
+    void lcd_move_get_e_amount()          { _lcd_move_distance_menu(E_AXIS, lcd_move_e); }
+  #elif EXTRUDERS > 1
     void lcd_move_get_e0_amount()         { _lcd_move_distance_menu(E_AXIS, lcd_move_e0); }
     void lcd_move_get_e1_amount()         { _lcd_move_distance_menu(E_AXIS, lcd_move_e1); }
     #if EXTRUDERS > 2
@@ -3106,8 +3115,9 @@ void lcd_quick_feedback(const bool clear_buttons) {
 
     #endif
 
-    MENU_ITEM(submenu, MSG_MOVE_E, lcd_move_get_e_amount);
-    #if EXTRUDERS > 1
+    #if EXTRUDERS == 1
+      MENU_ITEM(submenu, MSG_MOVE_E, lcd_move_get_e_amount);
+    #elif EXTRUDERS > 1
       MENU_ITEM(submenu, MSG_MOVE_E MSG_MOVE_E1, lcd_move_get_e0_amount);
       MENU_ITEM(submenu, MSG_MOVE_E MSG_MOVE_E2, lcd_move_get_e1_amount);
       #if EXTRUDERS > 2
@@ -4049,7 +4059,7 @@ void lcd_quick_feedback(const bool clear_buttons) {
 
   #endif // LASER
 
-  #if HAS_SDSUPPORT
+  #if HAS_SD_SUPPORT
 
     #if !PIN_EXISTS(SD_DETECT)
       void lcd_sd_refresh() {
@@ -4365,21 +4375,16 @@ void lcd_quick_feedback(const bool clear_buttons) {
       return PSTR(MSG_FILAMENTCHANGE);
     }
 
-    void _change_filament_temp(const uint8_t index) {
+    void _change_filament_temp(const uint16_t temperature) {
       char cmd[11];
-      uint16_t temp;
       sprintf_P(cmd, _change_filament_temp_command(), _change_filament_temp_extruder);
-      switch (index) {
-        case 1: temp = PREHEAT_1_TEMP_HOTEND; break;
-        case 2: temp = PREHEAT_2_TEMP_HOTEND; break;
-        case 3: temp = PREHEAT_3_TEMP_HOTEND; break;
-      }
-      heaters[_change_filament_temp_extruder].setTarget(temp);
+      heaters[_change_filament_temp_extruder].setTarget(temperature);
       lcd_enqueue_command(cmd);
     }
-    void _lcd_change_filament_temp_1_menu() { _change_filament_temp(1); }
-    void _lcd_change_filament_temp_2_menu() { _change_filament_temp(2); }
-    void _lcd_change_filament_temp_3_menu() { _change_filament_temp(3); }
+    void _lcd_change_filament_temp_1_menu() { _change_filament_temp(PREHEAT_1_TEMP_HOTEND); }
+    void _lcd_change_filament_temp_2_menu() { _change_filament_temp(PREHEAT_2_TEMP_HOTEND); }
+    void _lcd_change_filament_temp_3_menu() { _change_filament_temp(PREHEAT_2_TEMP_HOTEND); }
+    void _lcd_change_filament_temp_custom_menu() { _change_filament_temp(heaters[_change_filament_temp_extruder].target_temperature); }
 
     static const char* change_filament_header(const AdvancedPauseMode mode) {
       switch (mode) {
@@ -4401,6 +4406,20 @@ void lcd_quick_feedback(const bool clear_buttons) {
       MENU_ITEM(submenu, MSG_PREHEAT_1, _lcd_change_filament_temp_1_menu);
       MENU_ITEM(submenu, MSG_PREHEAT_2, _lcd_change_filament_temp_2_menu);
       MENU_ITEM(submenu, MSG_PREHEAT_3, _lcd_change_filament_temp_3_menu);
+      uint16_t max_temp;
+      switch (extruder) {
+        default: max_temp = HEATER_0_MAXTEMP;
+        #if HOTENDS > 1
+          case 1: max_temp = HEATER_1_MAXTEMP; break;
+          #if HOTENDS > 2
+            case 2: max_temp = HEATER_2_MAXTEMP; break;
+            #if HOTENDS > 3
+              case 3: max_temp = HEATER_3_MAXTEMP; break;
+            #endif
+          #endif
+        #endif
+      }
+      MENU_MULTIPLIER_ITEM_EDIT_CALLBACK(int3, MSG_PREHEAT_CUSTOM, &heaters[_change_filament_temp_extruder].target_temperature, EXTRUDE_MINTEMP, max_temp - 15, _lcd_change_filament_temp_custom_menu);
       END_MENU();
     }
     void lcd_temp_menu_e0_filament_change()  { _lcd_temp_menu_filament_op(ADVANCED_PAUSE_MODE_PAUSE_PRINT, 0); }
@@ -5042,7 +5061,7 @@ void lcd_quick_feedback(const bool clear_buttons) {
   void menu_action_gcode(const char* pgcode) { commands.enqueue_and_echo_P(pgcode); }
   void menu_action_function(screenFunc_t func) { (*func)(); }
 
-  #if HAS_SDSUPPORT
+  #if HAS_SD_SUPPORT
 
     void menu_action_sdfile(const char* longFilename) {
       card.openAndPrintFile(longFilename);
@@ -5118,7 +5137,7 @@ void lcd_init() {
 
   #endif // !NEWPANEL
 
-  #if HAS_SDSUPPORT && PIN_EXISTS(SD_DETECT)
+  #if HAS_SD_SUPPORT && PIN_EXISTS(SD_DETECT)
     SET_INPUT_PULLUP(SD_DETECT_PIN);
     lcd_sd_status = 2; // UNKNOWN
   #endif
@@ -5217,7 +5236,7 @@ void lcd_update() {
 
   #endif // ULTIPANEL
 
-  #if HAS_SDSUPPORT && PIN_EXISTS(SD_DETECT)
+  #if HAS_SD_SUPPORT && PIN_EXISTS(SD_DETECT)
 
     const uint8_t sd_status = (uint8_t)IS_SD_INSERTED;
     if (sd_status != lcd_sd_status && lcd_detected()) {
@@ -5246,7 +5265,7 @@ void lcd_update() {
       );
     }
 
-  #endif // HAS_SDSUPPORT && SD_DETECT_PIN
+  #endif // HAS_SD_SUPPORT && SD_DETECT_PIN
 
   #if HAS_SD_RESTART && ENABLED(ULTIPANEL)
     if (restart.count && restart.job_phase == RESTART_IDLE) {
