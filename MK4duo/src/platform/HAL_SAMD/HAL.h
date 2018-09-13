@@ -210,8 +210,6 @@ class HAL {
     static void analogStart();
     static void AdcChangePin(const pin_t old_pin, const pin_t new_pin);
 
-    static void hwSetup(void);
-
     static bool pwm_status(const pin_t pin);
     static bool tc_status(const pin_t pin);
 
@@ -284,10 +282,12 @@ class HAL {
       }
     }
 
-    static void showStartReason();
-
     static int getFreeRam();
-    static void resetHardware();
+
+    // Not used in SAMD
+    FORCE_INLINE static void hwSetup() { }
+    FORCE_INLINE static void showStartReason() { }
+    FORCE_INLINE static void resetHardware() {}
 
     // SPI related functions
     #if ENABLED(SOFTWARE_SPI)
@@ -350,3 +350,4 @@ void eeprom_update_block(const void* pos, void* eeprom_address, size_t n);
 
 
 #endif // _HAL_SAMD_H
+

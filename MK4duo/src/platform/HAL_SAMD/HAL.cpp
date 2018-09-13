@@ -39,15 +39,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  *
- * Description: HAL for Arduino Due and compatible (SAM3X8E)
+ * Description: HAL for Arduino SAMD
  *
  * Contributors:
- * Copyright (c) 2014 Bob Cousins bobcousins42@googlemail.com
- *                    Nico Tonnhofer wurstnase.reprap@gmail.com
+ * Copyright (c) 2018 Alberto Cotronei @MagoKimbra
  *
- * Copyright (c) 2015 - 2016 Alberto Cotronei @MagoKimbra
- *
- * ARDUINO_ARCH_SAM
+ * ARDUINO_ARCH_SAMD
  */
 
 // --------------------------------------------------------------------------
@@ -61,6 +58,7 @@
 #include <malloc.h>
 #include <Wire.h>
 #include "wiring_private.h"
+
 // --------------------------------------------------------------------------
 // Public Variables
 // --------------------------------------------------------------------------
@@ -71,7 +69,6 @@ uint8_t MCUSR;
   int16_t HAL::AnalogInputValues[NUM_ANALOG_INPUTS] = { 0 };
   bool    HAL::Analog_is_ready = false;
 #endif
-
 
 // Wait for synchronization of registers between the clock domains
 static __inline__ void syncTC_16(Tc* TCx) __attribute__((always_inline, unused));
@@ -133,21 +130,6 @@ HAL::~HAL() {
 
 bool HAL::execute_100ms = false;
 
-// do any hardware-specific initialization here
-void HAL::hwSetup(void) {
-
-  
-
-
-}
-
-// Print apparent cause of start/restart
-void HAL::showStartReason() {
-
-
-
-}
-
 // Return available memory
 int HAL::getFreeRam() {
   struct mallinfo memstruct = mallinfo();
@@ -155,38 +137,6 @@ int HAL::getFreeRam() {
 
   // avail mem in heap + (bottom of stack addr - end of heap addr)
   return (memstruct.fordblks + (int)stack_ptr -  (int)sbrk(0));
-}
-
-
-// Start converting the enabled channels
-void AnalogInStartConversion() {
-
-}
-
-// Enable or disable a channel.
-void AnalogInEnablePin(const pin_t r_pin, const bool enable) {
- 
-}   
-
-// Read the most recent 12-bit result from a pin
-uint16_t AnalogInReadPin(const pin_t r_pin) {
-
-  return 800;
-}
-
-// Initialize ADC channels
-void HAL::analogStart(void) {
-
-}
-
-void HAL::AdcChangePin(const pin_t old_pin, const pin_t new_pin) {
-
-}
-
-// Reset peripherals and cpu
-void HAL::resetHardware() {
-
-
 }
 
 // --------------------------------------------------------------------------
@@ -200,15 +150,6 @@ static const uint32_t PwmFastClock =  25000 * 255;        // fast PWM clock for 
 static const uint32_t PwmSlowClock = (25000 * 255) / 256; // slow PWM clock to allow us to get slow speeds
 
 static inline uint32_t ConvertRange(const float f, const uint32_t top) { return LROUND(f * (float)top); }
-
-
-// AnalogWriteTc to a TC pin
-// Return true if successful, false if we need to call software pwm
-static void AnalogWriteTc(const PinDescription& pinDesc, const float ulValue, const uint16_t freq) {
-
-  
-  return;
-}
 
 bool HAL::pwm_status(const pin_t pin) {
   const PinDescription& pinDesc = g_APinDescription[pin];
@@ -224,36 +165,29 @@ bool HAL::tc_status(const pin_t pin) {
   else return false;
 }
 
-
 static __inline__ void syncDAC() __attribute__((always_inline, unused));
 static void syncDAC() {
-  while (DAC->STATUS.bit.SYNCBUSY == 1)
-    ;
+  while (DAC->STATUS.bit.SYNCBUSY == 1);
 }
 
 static int _writeResolution = 8;
 
-static inline uint32_t mapResolution(uint32_t value, uint32_t from, uint32_t to)
-{
-  if (from == to) {
+static inline uint32_t mapResolution(uint32_t value, uint32_t from, uint32_t to) {
+  if (from == to)
     return value;
-  }
-  if (from > to) {
-    return value >> (from-to);
-  }
-  return value << (to-from);
+  else if (from > to)
+    return value >> (from - to);
+  else
+    return value << (to - from);
 }
 
 
 void HAL::analogWrite(pin_t pin,  uint32_t value, const uint16_t freq/*=1000*/) {
 
-
-PinDescription pinDesc = g_APinDescription[pin];
+  PinDescription pinDesc = g_APinDescription[pin];
   uint32_t attr = pinDesc.ulPinAttribute;
 
-
-  if ((attr & PIN_ATTR_ANALOG) == PIN_ATTR_ANALOG)
-  {
+  if ((attr & PIN_ATTR_ANALOG) == PIN_ATTR_ANALOG) {
     // DAC handling code
 
     if (pin != PIN_A0) { // Only 1 DAC on A0 (PA02)
@@ -270,8 +204,7 @@ PinDescription pinDesc = g_APinDescription[pin];
     return;
   }
 
-  if ((attr & PIN_ATTR_PWM) == PIN_ATTR_PWM)
-  { 
+  if ((attr & PIN_ATTR_PWM) == PIN_ATTR_PWM) { 
     value = mapResolution(value, _writeResolution, 16);
 
     uint32_t tcNum = GetTCNumber(pinDesc.ulPWMChannel);
@@ -288,7 +221,8 @@ PinDescription pinDesc = g_APinDescription[pin];
       {
         pinPeripheral(pin, PIO_TIMER);
       }
-    } else {
+    }
+    else {
       // We suppose that attr has PIN_ATTR_TIMER_ALT bit set...
       pinPeripheral(pin, PIO_TIMER_ALT);
     }
@@ -325,7 +259,8 @@ PinDescription pinDesc = g_APinDescription[pin];
         // Enable TCx
         TCx->COUNT16.CTRLA.bit.ENABLE = 1;
         syncTC_16(TCx);
-      } else {
+      }
+      else {
         // -- Configure TCC
         Tcc* TCCx = (Tcc*) GetTC(pinDesc.ulPWMChannel);
         // Disable TCCx
@@ -344,7 +279,8 @@ PinDescription pinDesc = g_APinDescription[pin];
         TCCx->CTRLA.bit.ENABLE = 1;
         syncTCC(TCCx);
       }
-    } else {
+    }
+    else {
       if (tcNum >= TCC_INST_NUM) {
         Tc* TCx = (Tc*) GetTC(pinDesc.ulPWMChannel);
         TCx->COUNT16.CC[tcChannel].reg = (uint32_t) value;
@@ -365,11 +301,11 @@ PinDescription pinDesc = g_APinDescription[pin];
   // -- Defaults to digital write
   pinMode(pin, OUTPUT);
   value = mapResolution(value, _writeResolution, 8);
-  if (value < 128) {
+  if (value < 128)
     digitalWrite(pin, LOW);
-  } else {
+  else
     digitalWrite(pin, HIGH);
-  }
+
 }
 
 /**
@@ -383,7 +319,7 @@ PinDescription pinDesc = g_APinDescription[pin];
  *  - For ENDSTOP_INTERRUPTS_FEATURE check endstops if flagged
  */
 void HAL::Tick() {
- 
+
   static millis_t cycle_check_temp = 0;
 	millis_t now = millis();
 
@@ -398,7 +334,6 @@ void HAL::Tick() {
     //LOOP_FAN() fans[f].SetHardwarePwm();
   #endif
 
-  // Calculation cycle approximate a 100ms
   // Calculation cycle temp a 100ms
   if (ELAPSED(now, cycle_check_temp)) {
     cycle_check_temp = now + 100UL;
@@ -408,20 +343,10 @@ void HAL::Tick() {
 
   // read analog values
   #if ANALOG_INPUTS > 0
-
-    for (uint8_t h = 0; h < HEATER_COUNT; h++) {
-    
-      AnalogInputValues[heaters[h].sensor.pin] = (analogRead(heaters[h].sensor.pin)*16);
-  
-    }
-  
-
+    LOOP_HEATER() AnalogInputValues[heaters[h].sensor.pin] = (analogRead(heaters[h].sensor.pin) * 16);
     Analog_is_ready = true;
-    AnalogInStartConversion();
-
     // Update the raw values if they've been read. Else we could be updating them during reading.
-    if (HAL::Analog_is_ready) thermalManager.set_current_temp_raw();
-
+    thermalManager.set_current_temp_raw();
   #endif
 
   #if ENABLED(BABYSTEPPING)
@@ -440,7 +365,6 @@ void HAL::Tick() {
 
 }
 
-
 char *dtostrf (double val, signed char width, unsigned char prec, char *sout) {
   asm(".global _printf_float");
 
@@ -451,3 +375,4 @@ char *dtostrf (double val, signed char width, unsigned char prec, char *sout) {
 }
 
 #endif // ARDUINO_ARCH_SAMD
+
