@@ -1507,6 +1507,66 @@ bool Planner::fill_block(block_t * const block, bool split_move,
     block->steps[Z_AXIS] = ABS(dz);
   #endif
 
+  /**
+   * This part of the code calculates the total length of the movement.
+   * For cartesian bots, the X_AXIS is the real X movement and same for Y_AXIS.
+   * But for corexy bots, that is not true. The "X_AXIS" and "Y_AXIS" motors (that should be named to A_AXIS
+   * and B_AXIS) cannot be used for X and Y length, because A=X+Y and B=X-Y.
+   * So we need to create other 2 "AXIS", named X_HEAD and Y_HEAD, meaning the real displacement of the Head.
+   * Having the real displacement of the head, we can calculate the total movement length and apply the desired speed.
+   */
+  #if IS_CORE
+    float delta_mm[Z_HEAD + 1];
+    #if CORE_IS_XY
+      delta_mm[X_HEAD] = dx * mechanics.steps_to_mm[A_AXIS];
+      delta_mm[Y_HEAD] = dy * mechanics.steps_to_mm[B_AXIS];
+      delta_mm[Z_AXIS] = dz * mechanics.steps_to_mm[Z_AXIS];
+      delta_mm[A_AXIS] = da * mechanics.steps_to_mm[A_AXIS];
+      delta_mm[B_AXIS] = CORESIGN(db) * mechanics.steps_to_mm[B_AXIS];
+    #elif CORE_IS_XZ
+      delta_mm[X_HEAD] = dx * mechanics.steps_to_mm[A_AXIS];
+      delta_mm[Y_AXIS] = dy * mechanics.steps_to_mm[Y_AXIS];
+      delta_mm[Z_HEAD] = dz * mechanics.steps_to_mm[C_AXIS];
+      delta_mm[A_AXIS] = da * mechanics.steps_to_mm[A_AXIS];
+      delta_mm[C_AXIS] = CORESIGN(dc) * mechanics.steps_to_mm[C_AXIS];
+    #elif CORE_IS_YZ
+      delta_mm[X_AXIS] = dx * mechanics.steps_to_mm[X_AXIS];
+      delta_mm[Y_HEAD] = dy * mechanics.steps_to_mm[B_AXIS];
+      delta_mm[Z_HEAD] = dz * mechanics.steps_to_mm[C_AXIS];
+      delta_mm[B_AXIS] = db * mechanics.steps_to_mm[B_AXIS];
+      delta_mm[C_AXIS] = CORESIGN(dc) * mechanics.steps_to_mm[C_AXIS];
+    #endif
+  #else
+    float delta_mm[XYZE];
+    delta_mm[X_AXIS] = dx * mechanics.steps_to_mm[X_AXIS];
+    delta_mm[Y_AXIS] = dy * mechanics.steps_to_mm[Y_AXIS];
+    delta_mm[Z_AXIS] = dz * mechanics.steps_to_mm[Z_AXIS];
+  #endif
+  delta_mm[E_AXIS] = esteps_float * mechanics.steps_to_mm[E_AXIS_N];
+
+  if (block->steps[X_AXIS] < MIN_STEPS_PER_SEGMENT && block->steps[Y_AXIS] < MIN_STEPS_PER_SEGMENT && block->steps[Z_AXIS] < MIN_STEPS_PER_SEGMENT) {
+    block->millimeters = ABS(delta_mm[E_AXIS]);
+  }
+  else {
+    #if ENABLED(HYSTERESIS_FEATURE)
+      insert_hysteresis_correction(block, delta_mm);
+    #endif
+    if (millimeters)
+      block->millimeters = millimeters;
+    else
+      block->millimeters = SQRT(
+        #if CORE_IS_XY
+          sq(delta_mm[X_HEAD]) + sq(delta_mm[Y_HEAD]) + sq(delta_mm[Z_AXIS])
+        #elif CORE_IS_XZ
+          sq(delta_mm[X_HEAD]) + sq(delta_mm[Y_AXIS]) + sq(delta_mm[Z_HEAD])
+        #elif CORE_IS_YZ
+          sq(delta_mm[X_AXIS]) + sq(delta_mm[Y_HEAD]) + sq(delta_mm[Z_HEAD])
+        #else
+          sq(delta_mm[X_AXIS]) + sq(delta_mm[Y_AXIS]) + sq(delta_mm[Z_AXIS])
+        #endif
+      );
+  }
+
   block->steps[E_AXIS] = esteps;
   block->step_event_count = MAX4(block->steps[X_AXIS], block->steps[Y_AXIS], block->steps[Z_AXIS], esteps);
 
@@ -1751,66 +1811,6 @@ bool Planner::fill_block(block_t * const block, bool split_move,
   else
     NOLESS(fr_mm_s, mechanics.min_travel_feedrate_mm_s);
 
-  /**
-   * This part of the code calculates the total length of the movement.
-   * For cartesian bots, the X_AXIS is the real X movement and same for Y_AXIS.
-   * But for corexy bots, that is not true. The "X_AXIS" and "Y_AXIS" motors (that should be named to A_AXIS
-   * and B_AXIS) cannot be used for X and Y length, because A=X+Y and B=X-Y.
-   * So we need to create other 2 "AXIS", named X_HEAD and Y_HEAD, meaning the real displacement of the Head.
-   * Having the real displacement of the head, we can calculate the total movement length and apply the desired speed.
-   */
-  #if IS_CORE
-    float delta_mm[Z_HEAD + 1];
-    #if CORE_IS_XY
-      delta_mm[X_HEAD] = dx * mechanics.steps_to_mm[A_AXIS];
-      delta_mm[Y_HEAD] = dy * mechanics.steps_to_mm[B_AXIS];
-      delta_mm[Z_AXIS] = dz * mechanics.steps_to_mm[Z_AXIS];
-      delta_mm[A_AXIS] = da * mechanics.steps_to_mm[A_AXIS];
-      delta_mm[B_AXIS] = CORESIGN(db) * mechanics.steps_to_mm[B_AXIS];
-    #elif CORE_IS_XZ
-      delta_mm[X_HEAD] = dx * mechanics.steps_to_mm[A_AXIS];
-      delta_mm[Y_AXIS] = dy * mechanics.steps_to_mm[Y_AXIS];
-      delta_mm[Z_HEAD] = dz * mechanics.steps_to_mm[C_AXIS];
-      delta_mm[A_AXIS] = da * mechanics.steps_to_mm[A_AXIS];
-      delta_mm[C_AXIS] = CORESIGN(dc) * mechanics.steps_to_mm[C_AXIS];
-    #elif CORE_IS_YZ
-      delta_mm[X_AXIS] = dx * mechanics.steps_to_mm[X_AXIS];
-      delta_mm[Y_HEAD] = dy * mechanics.steps_to_mm[B_AXIS];
-      delta_mm[Z_HEAD] = dz * mechanics.steps_to_mm[C_AXIS];
-      delta_mm[B_AXIS] = db * mechanics.steps_to_mm[B_AXIS];
-      delta_mm[C_AXIS] = CORESIGN(dc) * mechanics.steps_to_mm[C_AXIS];
-    #endif
-  #else
-    float delta_mm[XYZE];
-    delta_mm[X_AXIS] = dx * mechanics.steps_to_mm[X_AXIS];
-    delta_mm[Y_AXIS] = dy * mechanics.steps_to_mm[Y_AXIS];
-    delta_mm[Z_AXIS] = dz * mechanics.steps_to_mm[Z_AXIS];
-  #endif
-  delta_mm[E_AXIS] = esteps_float * mechanics.steps_to_mm[E_AXIS_N];
-
-  if (block->steps[X_AXIS] < MIN_STEPS_PER_SEGMENT && block->steps[Y_AXIS] < MIN_STEPS_PER_SEGMENT && block->steps[Z_AXIS] < MIN_STEPS_PER_SEGMENT) {
-    block->millimeters = ABS(delta_mm[E_AXIS]);
-  }
-  else if (!millimeters) {
-    #if ENABLED(HYSTERESIS_FEATURE)
-      insert_hysteresis_correction(dx, dy, dz, block, delta_mm);
-    #endif
-
-    block->millimeters = SQRT(
-      #if CORE_IS_XY
-        sq(delta_mm[X_HEAD]) + sq(delta_mm[Y_HEAD]) + sq(delta_mm[Z_AXIS])
-      #elif CORE_IS_XZ
-        sq(delta_mm[X_HEAD]) + sq(delta_mm[Y_AXIS]) + sq(delta_mm[Z_HEAD])
-      #elif CORE_IS_YZ
-        sq(delta_mm[X_AXIS]) + sq(delta_mm[Y_HEAD]) + sq(delta_mm[Z_HEAD])
-      #else
-        sq(delta_mm[X_AXIS]) + sq(delta_mm[Y_AXIS]) + sq(delta_mm[Z_AXIS])
-      #endif
-    );
-  }
-  else
-    block->millimeters = millimeters;
-
   #if ENABLED(LASER)
 
     block->laser_intensity = laser.intensity;
@@ -1942,7 +1942,7 @@ bool Planner::fill_block(block_t * const block, bool split_move,
   #if ENABLED(XY_FREQUENCY_LIMIT)
 
     // Check and limit the xy direction change frequency
-    const uint8_t direction_change = block->direction_bits ^ old_direction_bits;
+    const uint8_t direction_change_bits = block->direction_bits ^ old_direction_bits;
     old_direction_bits = block->direction_bits;
     segment_time_us = LROUND((float)segment_time_us / speed_factor);
 
@@ -1953,14 +1953,14 @@ bool Planner::fill_block(block_t * const block, bool split_move,
               ys1 = axis_segment_time_us[Y_AXIS][1],
               ys2 = axis_segment_time_us[Y_AXIS][2];
 
-    if (TEST(direction_change, X_AXIS)) {
+    if (TEST(direction_change_bits, X_AXIS)) {
       xs2 = axis_segment_time_us[X_AXIS][2] = xs1;
       xs1 = axis_segment_time_us[X_AXIS][1] = xs0;
       xs0 = 0;
     }
     xs0 = axis_segment_time_us[X_AXIS][0] = xs0 + segment_time_us;
 
-    if (TEST(direction_change, Y_AXIS)) {
+    if (TEST(direction_change_bits, Y_AXIS)) {
       ys2 = axis_segment_time_us[Y_AXIS][2] = axis_segment_time_us[Y_AXIS][1];
       ys1 = axis_segment_time_us[Y_AXIS][1] = axis_segment_time_us[Y_AXIS][0];
       ys0 = 0;
@@ -2576,25 +2576,24 @@ void Planner::refresh_positioning() {
 
 #if ENABLED(HYSTERESIS_FEATURE)
 
-  void Planner::insert_hysteresis_correction(const int32_t dx, const int32_t dy, const int32_t dz, block_t * block, float delta_mm[]) {
+  void Planner::insert_hysteresis_correction(block_t * const block, float (&delta_mm)[XYZE]) {
 
-    static uint8_t last_direction_bits;
-    const bool positive_movement[XYZ] = {dx > 0, dy > 0, dz > 0};
-    uint8_t direction_change = last_direction_bits ^ block->direction_bits;
+    static uint8_t last_direction_bits = 0;
+    uint8_t direction_change_bits = last_direction_bits ^ block->direction_bits;
 
-    if (dx == 0) CBI(direction_change, X_AXIS);
-    if (dy == 0) CBI(direction_change, Y_AXIS);
-    if (dz == 0) CBI(direction_change, Z_AXIS);
-    last_direction_bits ^= direction_change;
+    LOOP_XYZ(axis)
+      if (!block->steps[axis]) CBI(direction_change_bits, axis);
 
-    if (hysteresis_correction == 0.0 || !direction_change) return;
+    last_direction_bits ^= direction_change_bits;
+
+    if (hysteresis_correction == 0.0f || !direction_change_bits) return;
 
     LOOP_XYZ(axis) {
-      if (hysteresis_mm[axis] != 0 && TEST(direction_change, axis)) {
-        const int32_t residual_error = hysteresis_correction * (positive_movement[axis] ? 1.0f : -1.0f) * hysteresis_mm[axis] * mechanics.axis_steps_per_mm[axis];
-        if (residual_error != 0) {
-          block->steps[axis] += ABS(residual_error);
-          delta_mm[axis] = (positive_movement[axis] ? 1.0f : -1.0f) * block->steps[axis] * mechanics.steps_to_mm[axis];
+      if (hysteresis_mm[axis] && TEST(direction_change_bits, axis)) {
+        const uint32_t fix = hysteresis_correction * hysteresis_mm[axis] * mechanics.axis_steps_per_mm[axis];
+        if (fix) {
+          block->steps[axis] += fix;
+          delta_mm[axis] = (TEST(block->direction_bits, axis) ? -1.0f : 1.0f) * block->steps[axis] * mechanics.steps_to_mm[axis];
         }
       }
     }
