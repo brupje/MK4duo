@@ -30,7 +30,7 @@
 #define _STATUS_SCREEN_DOGM_H_
 
 FORCE_INLINE void _draw_centered_temp(const int16_t temp, const uint8_t x, const uint8_t y) {
-  const char * const str = itostr3(temp);
+  PGM_P const str = itostr3(temp);
   lcd_moveto(x - (str[0] != ' ' ? 0 : str[1] != ' ' ? 1 : 2) * DOG_CHAR_WIDTH / 2, y);
   lcd_put_u8str(str);
   lcd_put_u8str_P(PSTR(LCD_STR_DEGREE " "));
@@ -75,7 +75,7 @@ FORCE_INLINE void _draw_heater_status(const uint8_t x, const uint8_t heater, con
 // Before homing, blink '123' <-> '???'.
 // Homed and known, display constantly.
 //
-FORCE_INLINE void _draw_axis_value(const AxisEnum axis, const char *value, const bool blink) {
+FORCE_INLINE void _draw_axis_value(const AxisEnum axis, PGM_P value, const bool blink) {
   if (blink)
     lcd_put_u8str(value);
   else {
@@ -109,7 +109,7 @@ inline void lcd_implementation_status_message(const bool blink) {
       // String is larger than the available space in screen.
 
       // Get a pointer to the next valid UTF8 character
-      const char *stat = lcd_status_message + status_scroll_offset;
+      PGM_P stat = lcd_status_message + status_scroll_offset;
 
       // Get the string remaining length
       const uint8_t rlen = utf8_strlen(stat);
@@ -189,9 +189,9 @@ static void lcd_implementation_status_screen() {
       #endif
 
       lcd_moveto(3,6);
-      if (stepper.current_block->laser_status == LASER_ON) {
+      if (stepper.laser_status()) {
         u8g.drawBitmapP(5,14, ICON_BYTEWIDTH, ICON_HEIGHT, laseron_bmp);
-        lcd_put_u8str(itostr3(stepper.current_block->laser_intensity));
+        lcd_put_u8str(itostr3(stepper.laser_intensity()));
         lcd_put_u8str_P(PSTR("%"));
       } else {
         u8g.drawBitmapP(5,14, ICON_BYTEWIDTH, ICON_HEIGHT, laseroff_bmp);
@@ -370,7 +370,7 @@ static void lcd_implementation_status_screen() {
     #define XYZ_FRAME_HEIGHT INFO_FONT_HEIGHT + 1
   #endif
 
-  static char xstring[5], ystring[5], zstring[7];
+  static char xstring[5], ystring[5], zstring[8];
   #if HAS_LCD_FILAMENT_SENSOR
     static char wstring[5], mstring[4];
   #endif

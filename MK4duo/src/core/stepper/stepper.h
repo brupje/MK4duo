@@ -53,10 +53,10 @@ class Stepper {
 
   public: /** Public Parameters */
 
-    static uint16_t direction_flag; // Driver Stepper direction flag
+    static flagword_t direction_flag; // Driver Stepper direction flag
 
-    #if ENABLED(X_TWO_ENDSTOPS) || ENABLED(Y_TWO_ENDSTOPS) || ENABLED(Z_TWO_ENDSTOPS)
-      static bool homing_dual_axis;
+    #if HAS_MULTI_ENDSTOP
+      static bool separate_multi_axis;
     #endif
 
     static uint8_t  minimum_pulse;
@@ -82,7 +82,9 @@ class Stepper {
     #if ENABLED(Y_TWO_ENDSTOPS)
       static bool locked_Y_motor, locked_Y2_motor;
     #endif
-    #if ENABLED(Z_TWO_ENDSTOPS)
+    #if ENABLED(Z_THREE_ENDSTOPS)
+      static bool locked_Z_motor, locked_Z2_motor, locked_Z3_motor;
+    #elif ENABLED(Z_TWO_ENDSTOPS)
       static bool locked_Z_motor, locked_Z2_motor;
     #endif
 
@@ -94,7 +96,7 @@ class Stepper {
     static uint32_t advance_dividend[XYZE],
                     advance_divisor,
                     step_events_completed,  // The number of step events executed in the current block
-                    accelerate_until,       // The point from where we need to stop acceleration
+                    accelerate_until,       // The point from where we need to stop data.acceleration
                     decelerate_after,       // The point from where we need to start decelerating
                     step_event_count;       // The total event count for the current block
 
@@ -197,11 +199,6 @@ class Stepper {
      * to notify the subsystem that it is time to go to work.
      */
     FORCE_INLINE static void wake_up() { ENABLE_STEPPER_INTERRUPT(); }
-
-    /**
-     * Set direction bits for all steppers
-     */
-    static void set_directions();
 
     /**
      * Enabled or Disable one or all stepper driver
@@ -338,8 +335,8 @@ class Stepper {
       static void microstep_readings();
     #endif
 
-    #if ENABLED(X_TWO_ENDSTOPS) || ENABLED(Y_TWO_ENDSTOPS) || ENABLED(Z_TWO_ENDSTOPS)
-      FORCE_INLINE static void set_homing_dual_axis(const bool state) { homing_dual_axis = state; }
+    #if HAS_MULTI_ENDSTOP
+      FORCE_INLINE static void set_separate_multi_axis(const bool state) { separate_multi_axis = state; }
     #endif
     #if ENABLED(X_TWO_ENDSTOPS)
       FORCE_INLINE static void set_x_lock(const bool state) { locked_X_motor = state; }
@@ -349,7 +346,11 @@ class Stepper {
       FORCE_INLINE static void set_y_lock(const bool state) { locked_Y_motor = state; }
       FORCE_INLINE static void set_y2_lock(const bool state) { locked_Y2_motor = state; }
     #endif
-    #if ENABLED(Z_TWO_ENDSTOPS)
+    #if ENABLED(Z_THREE_ENDSTOPS)
+      FORCE_INLINE static void set_z_lock(const bool state) { locked_Z_motor = state; }
+      FORCE_INLINE static void set_z2_lock(const bool state) { locked_Z2_motor = state; }
+      FORCE_INLINE static void set_z3_lock(const bool state) { locked_Z3_motor = state; }
+    #elif ENABLED(Z_TWO_ENDSTOPS)
       FORCE_INLINE static void set_z_lock(const bool state) { locked_Z_motor = state; }
       FORCE_INLINE static void set_z2_lock(const bool state) { locked_Z2_motor = state; }
     #endif
@@ -362,11 +363,26 @@ class Stepper {
      * Flag Stepper direction function
      */
     FORCE_INLINE static void setStepDir(const AxisEnum axis, const bool onoff) {
-      SET_BIT(direction_flag, axis, onoff);
+      SET_BIT(direction_flag._word, axis, onoff);
     }
-    FORCE_INLINE static bool isStepDir(const AxisEnum axis) { return TEST(direction_flag, axis); }
+    FORCE_INLINE static bool isStepDir(const AxisEnum axis) { return TEST(direction_flag._word, axis); }
+
+    #if ENABLED(LASER)
+      static bool laser_status();
+      FORCE_INLINE static float laser_intensity() { return current_block->laser_intensity; }
+    #endif
 
   private: /** Private Function */
+
+    /**
+     * Set direction bits for all steppers
+     */
+    static void set_directions();
+
+    /**
+     * Allow reset_stepper_drivers to access private set_directions
+     */
+    friend void reset_stepper_drivers();
 
     /**
      * Pulse phase Step

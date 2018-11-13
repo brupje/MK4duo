@@ -134,8 +134,8 @@
           float angle = random(0, 360);
           const float radius = random(
             #if MECH(DELTA)
-              (int)(0.1250000000 * mechanics.delta_probe_radius),
-              (int)(0.3333333333 * mechanics.delta_probe_radius)
+              (int)(0.1250000000 * mechanics.data.probe_radius),
+              (int)(0.3333333333 * mechanics.data.probe_radius)
             #else
               5, (int)(0.125 * MIN(X_MAX_LENGTH, Y_MAX_LENGTH))
             #endif
@@ -226,7 +226,7 @@
         if (verbose_level > 0) {
           if (verbose_level > 1) {
             SERIAL_VAL(n + 1);
-            SERIAL_MV(" of ", (int)n_samples);
+            SERIAL_MV(" of ", n_samples);
             SERIAL_MV(": z: ", sample_set[n], 3);
             if (verbose_level > 2) {
               SERIAL_MV(" mean: ", mean, 4);

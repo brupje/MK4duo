@@ -50,7 +50,12 @@
         card.read_restart_data();
         card.close_restart_file();
 
-        if ((job_info.valid_head) && job_info.valid_head == job_info.valid_foot) {
+        #if ENABLED(DEBUG_RESTART)
+          SERIAL_EMV("Restart valid_head:", job_info.valid_head);
+          SERIAL_EMV("Restart valid_foot:", job_info.valid_foot);
+        #endif
+
+        if (job_info.valid_head && job_info.valid_head == job_info.valid_foot) {
 
           uint8_t index = 0;
           char str_X[10], str_Y[10], str_Z[10], str_E[10];
@@ -75,7 +80,7 @@
             strcpy(buffer_ring[index++], PSTR("M117 Printing..."));
           #endif
 
-          uint8_t read = job_info.buffer_index_r, c = job_info.buffer_lenght;
+          uint8_t read = job_info.buffer_head, c = job_info.buffer_count;
           while (c--) {
             strcpy(buffer_ring[index++], job_info.buffer_ring[read]);
             read = (read + 1) % BUFSIZE;
@@ -129,7 +134,7 @@
     // Set temperature
     #if HEATER_COUNT > 0
       LOOP_HEATER() {
-        heaters[h].target_temperature = job_info.target_temperature[h];
+        heaters[h].setTarget(job_info.target_temperature[h]);
         thermalManager.wait_heater(&heaters[h], true);
       }
     #endif
@@ -190,9 +195,13 @@
       #endif
 
       // Commands in the queue
-      job_info.buffer_index_r = commands.buffer_index_r;
-      job_info.buffer_lenght = commands.buffer_lenght;
-      COPY_ARRAY(job_info.buffer_ring, commands.buffer_ring);
+      job_info.buffer_head = commands.buffer_ring.head();
+      job_info.buffer_count = commands.buffer_ring.count();
+      for (uint8_t index = 0; index < BUFSIZE; index++) {
+        gcode_t temp_cmd;
+        temp_cmd = commands.buffer_ring.peek(index);
+        strncpy_P(job_info.buffer_ring[index], temp_cmd.gcode, sizeof(job_info.buffer_ring[index]) - 1);
+      }
 
       // Elapsed print job time
       job_info.print_job_counter_elapsed = print_job_counter.duration() * 1000UL;
@@ -238,12 +247,12 @@
             SERIAL_EMV("leveling: ", int(job_info.leveling));
             SERIAL_EMV(" z_fade_height: ", int(job_info.z_fade_height));
           #endif
-          SERIAL_EMV("buffer_index_r: ", job_info.buffer_index_r);
-          SERIAL_EMV("buffer_lenght: ", job_info.buffer_lenght);
+          SERIAL_EMV("buffer_head: ", job_info.buffer_head);
+          SERIAL_EMV("buffer_count: ", job_info.buffer_count);
           if (restart)
-            for (uint8_t i = 0; i < count; i++) SERIAL_EMV("> ", buffer_ring[i]);
+            for (uint8_t i = 0; i < count; i++) SERIAL_EMT("> ", buffer_ring[i]);
           else
-            for (uint8_t i = 0; i < job_info.buffer_lenght; i++) SERIAL_EMV("> ", job_info.buffer_ring[i]);
+            for (uint8_t i = 0; i < job_info.buffer_count; i++) SERIAL_EMT("> ", job_info.buffer_ring[i]);
           SERIAL_EMT("Filename: ", job_info.fileName);
           SERIAL_EMV("sdpos: ", job_info.sdpos);
           SERIAL_EMV("print_job_counter_elapsed: ", job_info.print_job_counter_elapsed);

@@ -44,13 +44,6 @@
 
   enum LsAction : char { LS_Count, LS_GetFilename };
 
-  enum FlagCardReader : char {
-    flag_SD_OK,
-    flag_SD_saving,
-    flag_SD_printing,
-    flag_SD_filenameIsDir
-  };
-
   #include "SDFat.h"
 
   class CardReader {
@@ -83,7 +76,7 @@
 
     private: /** Private Parameters */
 
-      static uint8_t card_flag;
+      static flagbyte_t card_flag;
 
       static uint16_t nrFile_index;
 
@@ -157,10 +150,10 @@
       static void mount();
       static void unmount();
       static void ls();
-      static void getfilename(uint16_t nr, const char* const match=NULL);
+      static void getfilename(uint16_t nr, PGM_P const match=NULL);
       static void getAbsFilename(char* name);
       static void startFileprint();
-      static void openAndPrintFile(const char* name);
+      static void openAndPrintFile(PGM_P name);
       static void stopSDPrint();
       static void write_command(char* buf);
       static void printStatus();
@@ -170,7 +163,7 @@
       static void makeDirectory(char* filename);
       static void closeFile();
       static void printingHasFinished();
-      static void chdir(const char* relpath);
+      static void chdir(PGM_P relpath);
       static void reset_default();
       static void print_settings();
       static void beginautostart();
@@ -178,9 +171,9 @@
       static void setroot();
       static void setlast();
 
-      static void printEscapeChars(const char* s);
+      static void printEscapeChars(PGM_P s);
 
-      static bool selectFile(const char* filename);
+      static bool selectFile(PGM_P filename);
 
       static int8_t updir();
       static uint16_t getnrfilenames();
@@ -198,8 +191,8 @@
       #if HAS_EEPROM_SD
         static void open_eeprom_sd(const bool read);
         static void close_eeprom_sd();
-        FORCE_INLINE static int16_t write_eeprom_data(void* buf, uint16_t nbyte)  { return eeprom_file.isOpen() ? eeprom_file.write(buf, nbyte) : -1; }
-        FORCE_INLINE static int16_t read_eeprom_data(void* buf, uint16_t nbyte)   { return eeprom_file.isOpen() ? eeprom_file.read(buf, nbyte) : -1; }
+        FORCE_INLINE static int write_eeprom_data(void* buf, uint16_t nbyte)  { return eeprom_file.isOpen() ? eeprom_file.write(buf, nbyte) : -1; }
+        FORCE_INLINE static int read_eeprom_data(void* buf, uint16_t nbyte)   { return eeprom_file.isOpen() ? eeprom_file.read(buf, nbyte) : -1; }
       #endif
 
       #if ENABLED(SD_SETTINGS)
@@ -210,7 +203,7 @@
         static void StoreSettings();
         static void RetrieveSettings(bool addValue = false);
         static void parseKeyLine(char* key, char* value, int &len_k, int &len_v);
-        static void unparseKeyLine(const char* key, char* value);
+        static void unparseKeyLine(PGM_P key, char* value);
         static int  KeyIndex(char* key);
       #else
         static inline void RetrieveSettings() { reset_default(); }
@@ -226,26 +219,29 @@
         #endif
       #endif
 
-      // Flag function
-      FORCE_INLINE static void setOK(const bool onoff) {
-        SET_BIT(card_flag, flag_SD_OK, onoff);
-      }
-      FORCE_INLINE static bool isOK() { return TEST(card_flag, flag_SD_OK); }
+      // Card flag bit 0 SD OK
+      FORCE_INLINE static void setOK(const bool onoff) { card_flag.bit0 = onoff; }
+      FORCE_INLINE static bool isOK() { return card_flag.bit0; }
 
-      FORCE_INLINE static void setSaving(const bool onoff) {
-        SET_BIT(card_flag, flag_SD_saving, onoff);
-      }
-      FORCE_INLINE static bool isSaving() { return TEST(card_flag, flag_SD_saving); }
+      // Card flag bit 1 saving
+      FORCE_INLINE static void setSaving(const bool onoff) { card_flag.bit1 = onoff; }
+      FORCE_INLINE static bool isSaving() { return card_flag.bit1; }
 
-      FORCE_INLINE static void setSDprinting(const bool onoff) {
-        SET_BIT(card_flag, flag_SD_printing, onoff);
-      }
-      FORCE_INLINE static bool isSDprinting() { return TEST(card_flag, flag_SD_printing); }
+      // Card flag bit 2 printing
+      FORCE_INLINE static void setSDprinting(const bool onoff) { card_flag.bit2 = onoff; }
+      FORCE_INLINE static bool isSDprinting() { return card_flag.bit2; }
 
-      FORCE_INLINE static void setFilenameIsDir(const bool onoff) {
-        SET_BIT(card_flag, flag_SD_filenameIsDir, onoff);
-      }
-      FORCE_INLINE static bool isFilenameIsDir() { return TEST(card_flag, flag_SD_filenameIsDir); }
+      // Card flag bit 3 Autoreport SD
+      FORCE_INLINE static void setAutoreportSD(const bool onoff) { card_flag.bit3 = onoff; }
+      FORCE_INLINE static bool isAutoreportSD() { return card_flag.bit3; }
+
+      // Card flag bit 4 AbortSDprinting
+      FORCE_INLINE static void setAbortSDprinting(const bool onoff) { card_flag.bit4 = onoff; }
+      FORCE_INLINE static bool isAbortSDprinting() { return card_flag.bit4; }
+
+      // Card flag bit 5 Filename is dir
+      FORCE_INLINE static void setFilenameIsDir(const bool onoff) { card_flag.bit5 = onoff; }
+      FORCE_INLINE static bool isFilenameIsDir() { return card_flag.bit5; }
 
       FORCE_INLINE static void pauseSDPrint() { setSDprinting(false); }
       FORCE_INLINE static void setIndex(uint32_t newpos) { sdpos = newpos; gcode_file.seekSet(sdpos); }
@@ -258,7 +254,7 @@
 
     private: /** Private Function */
 
-      static void lsDive(SdBaseFile parent, const char* const match = NULL);
+      static void lsDive(SdBaseFile parent, PGM_P const match = NULL);
       static void parsejson(SdBaseFile &parser_file);
       static bool findGeneratedBy(char* buf, char* genBy);
       static bool findFirstLayerHeight(char* buf, float &firstlayerHeight);
@@ -274,24 +270,24 @@
 
   extern CardReader card;
 
-  #define IS_SD_PRINTING (card.isSDprinting())
-  #define IS_SD_FILE_OPEN (card.isFileOpen())
+  #define IS_SD_PRINTING()  (card.isSDprinting())
+  #define IS_SD_FILE_OPEN() (card.isFileOpen())
 
   #if PIN_EXISTS(SD_DETECT)
     #if ENABLED(SD_DETECT_INVERTED)
-      #define IS_SD_INSERTED (READ(SD_DETECT_PIN) != 0)
+      #define IS_SD_INSERTED()  READ(SD_DETECT_PIN)
     #else
-      #define IS_SD_INSERTED (READ(SD_DETECT_PIN) == 0)
+      #define IS_SD_INSERTED()  !READ(SD_DETECT_PIN)
     #endif
   #else
     //No card detect line? Assume the card is inserted.
-    #define IS_SD_INSERTED true
+    #define IS_SD_INSERTED() true
   #endif
 
 #else
 
-  #define IS_SD_PRINTING (false)
-  #define IS_SD_FILE_OPEN (false)
+  #define IS_SD_PRINTING()  (false)
+  #define IS_SD_FILE_OPEN() (false)
 
 #endif //SDSUPPORT
 

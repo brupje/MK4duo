@@ -31,6 +31,13 @@
 #ifndef _COMMANDS_H_
 #define _COMMANDS_H_
 
+struct gcode_t {
+  char    gcode[MAX_CMD_SIZE];  // Char for gcode
+  int8_t  s_port = -1;          // Serial port for print information:
+                                //    -1 for all port
+                                //    -2 for SD or null port
+};
+
 class Commands {
 
   public: /** Constructor */
@@ -39,11 +46,7 @@ class Commands {
 
   public: /** Public Parameters */
 
-    static uint8_t  buffer_lenght,  // Number of commands in the Buffer Ring
-                    buffer_index_r, // Read position in Buffer Ring
-                    buffer_index_w; // Write position in Buffer Ring
-
-    static char buffer_ring[BUFSIZE][MAX_CMD_SIZE];
+    static Circular_Queue<gcode_t, BUFSIZE> buffer_ring;
 
     static long gcode_LastN;
 
@@ -51,11 +54,9 @@ class Commands {
 
     static long gcode_N;
 
-    static bool send_ok[BUFSIZE];
+    static int serial_count[NUM_SERIAL];
 
-    static int serial_count;
-
-    static const char *injected_commands_P;
+    static PGM_P injected_commands_P;
 
     static watch_t last_command_watch;
 
@@ -67,16 +68,14 @@ class Commands {
     static void advance_queue();
     static void clear_queue();
 
-    static bool enqueue_and_echo(const char* cmd);
-    static void enqueue_and_echo_P(const char * const pgcode);
-    static void enqueue_and_echo_now(const char* cmd);
-    static void enqueue_and_echo_now_P(const char * const cmd);
+    static bool enqueue_and_echo(PGM_P cmd);
+    static void enqueue_and_echo_P(PGM_P const pgcode);
+    static void enqueue_and_echo_now(PGM_P cmd);
+    static void enqueue_and_echo_now_P(PGM_P const cmd);
 
     static void get_destination();
     static bool get_target_tool(const uint16_t code);
     static bool get_target_heater(int8_t &h, const bool only_hotend=false);
-
-    FORCE_INLINE static void setup() { for (uint8_t i = 0; i < COUNT(send_ok); i++) send_ok[i] = true; }
 
   private: /** Private Function */
 
@@ -87,11 +86,10 @@ class Commands {
 
     static void process_next();
     static void process_parsed();
-    static void commit(bool say_ok);
     static void unknown_error();
-    static void gcode_line_error(const char* err);
+    static void gcode_line_error(PGM_P err, const int8_t tmp_port);
 
-    static bool enqueue(const char* cmd, bool say_ok=false);
+    static bool enqueue(PGM_P cmd, int8_t port=-2);
     static bool drain_injected_P();
 
     #if HAS_SD_RESTART

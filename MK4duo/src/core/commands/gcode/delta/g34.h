@@ -12,33 +12,36 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
-#ifndef __BUZZER_H__
-#define __BUZZER_H__
+/**
+ * gcode.h
+ *
+ * Copyright (C) 2017 Alberto Cotronei @MagoKimbra
+ */
 
-#if HAS_BUZZER
+#if IS_DELTA
 
-  class Buzzer {
+  #define CODE_G34
 
-    public: /** Public Function */
+  /**
+   * G34: Set Delta Height calculated from toolhead position (only DELTA)
+   */
+  inline void gcode_G34(void) {
 
-      static void buzz(long duration, uint16_t freq);
+    if (mechanics.axis_unhomed_error()) return;
 
-  };
+    mechanics.data.height -= mechanics.current_position[Z_AXIS];
+    mechanics.recalc_delta_settings();
+    SERIAL_EMV("  New delta height:", mechanics.data.height, 3);
+    sound.feedback();
 
-  #define BUZZ(duration, freq) Buzzer::buzz(duration, freq)
+  }
 
-#else
-
-  #define BUZZ(duration, freq) { /* NOOP */ }
-
-#endif /* HAS_BUFFER */
-
-#endif // __BUZZER_H__
+#endif

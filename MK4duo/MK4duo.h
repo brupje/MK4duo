@@ -55,16 +55,15 @@
 #include <SPI.h>
 
 /**
- * Types
- */
-typedef uint32_t  millis_t;
-typedef int8_t    pin_t;
-
-/**
  * Include file
  */
-#include "src/inc/macros.h"
-#include "src/inc/driver_types.h"
+#include "src/lib/types.h"
+#include "src/lib/enum.h"
+#include "src/lib/macros.h"
+#include "src/lib/circular_queue.h"
+#include "src/lib/driver_types.h"
+#include "src/lib/watch.h"
+#include "src/lib/matrix.h"
 #include "Boards.h"
 
 // Configuration settings loading
@@ -111,12 +110,9 @@ typedef int8_t    pin_t;
 // Platform modules
 #include "src/platform/platform.h"
 
-// Watch modules
-#include "src/watch/watch.h"
-#include "src/watch/stopwatch.h"
-
 // Utility modules
 #include "src/utility/utility.h"
+#include "src/utility/stopwatch.h"
 #include "src/utility/point_t.h"
 #include "src/utility/hex_print_routines.h"
 #include "src/utility/bezier.h"
@@ -126,7 +122,6 @@ typedef int8_t    pin_t;
 #include "src/core/tools/tools.h"
 #include "src/core/tools/nozzle.h"
 #include "src/core/fan/fan.h"
-#include "src/core/fan/tachometric.h"
 #include "src/core/commands/commands.h"
 #include "src/core/eeprom/eeprom.h"
 #include "src/core/printer/printer.h"
@@ -137,6 +132,7 @@ typedef int8_t    pin_t;
 #include "src/core/heater/heater.h"
 #include "src/core/temperature/temperature.h"
 #include "src/core/printcounter/printcounter.h"
+#include "src/core/sound/sound.h"
 
 // LCD modules
 #include "src/lcd/language/language.h"
@@ -150,10 +146,10 @@ typedef int8_t    pin_t;
 #include "src/feature/emergency_parser/emergency_parser.h"
 #include "src/feature/probe/probe.h"
 #include "src/feature/bedlevel/bedlevel.h"
+#include "src/feature/bltouch/bltouch.h"
 #include "src/feature/external_dac/external_dac.h"
 #include "src/feature/tmc/tmc.h"
 #include "src/feature/power/power.h"
-#include "src/feature/buzzer/buzzer.h"
 #include "src/feature/mixing/mixing.h"
 #include "src/feature/filament/filament.h"
 #include "src/feature/filamentrunout/filamentrunout.h"
@@ -163,6 +159,7 @@ typedef int8_t    pin_t;
 #include "src/feature/laser/laser.h"
 #include "src/feature/cncrouter/cncrouter.h"
 #include "src/feature/mfrc522/mfrc522.h"
+#include "src/feature/pcf8574/pcf8574.h"
 #include "src/feature/flowmeter/flowmeter.h"
 #include "src/feature/dhtsensor/dhtsensor.h"
 #include "src/feature/rgbled/led.h"
@@ -172,22 +169,6 @@ typedef int8_t    pin_t;
 /**
  * External libraries loading
  */
-
-#if HAVE_DRV(TMC26X)
-  #include <TMC26XStepper.h>
-#endif
-
-#if HAVE_DRV(TMC2130)
-  #include <TMC2130Stepper.h>
-#endif
-
-#if HAVE_DRV(TMC2208)
-  #include <TMC2208Stepper.h>
-#endif
-
-#if HAVE_DRV(L6470)
-  #include <L6470.h>
-#endif
 
 #if ENABLED(ULTRA_LCD)
   #if ENABLED(LCD_I2C_TYPE_PCF8575)

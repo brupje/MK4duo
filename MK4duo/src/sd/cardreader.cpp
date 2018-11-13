@@ -53,7 +53,7 @@
 
   /** Private Parameters */
 
-  uint8_t CardReader::card_flag = 0;
+  flagbyte_t CardReader::card_flag;
 
   uint16_t CardReader::nrFile_index = 0;
 
@@ -150,7 +150,7 @@
     workDir = root;
   }
 
-  void CardReader::getfilename(uint16_t nr, const char* const match/*=NULL*/) {
+  void CardReader::getfilename(uint16_t nr, PGM_P const match/*=NULL*/) {
     #if ENABLED(SDCARD_SORT_ALPHA) && ENABLED(SDSORT_CACHE_NAMES)
       if (match != NULL) {
         while (nr < sort_count) {
@@ -199,7 +199,7 @@
     }
   }
 
-  void CardReader::openAndPrintFile(const char *name) {
+  void CardReader::openAndPrintFile(PGM_P name) {
     char cmd[4 + strlen(name) + 1]; // Room for "M23 ", filename, and null
     sprintf_P(cmd, PSTR("M23 %s"), name);
     for (char *c = &cmd[4]; *c; c++) *c = tolower(*c);
@@ -329,7 +329,7 @@
     #endif
   }
 
-  void CardReader::chdir(const char* relpath) {
+  void CardReader::chdir(PGM_P relpath) {
     SdBaseFile newDir;
     SdBaseFile *parent = &root;
 
@@ -403,7 +403,7 @@
     #endif
   }
 
-  void CardReader::printEscapeChars(const char* s) {
+  void CardReader::printEscapeChars(PGM_P s) {
     for (unsigned int i = 0; i < strlen(s); ++i) {
       switch (s[i]) {
         case '"':
@@ -421,8 +421,8 @@
     }
   }
 
-  bool CardReader::selectFile(const char* filename) {
-    const char *fname = filename;
+  bool CardReader::selectFile(PGM_P filename) {
+    PGM_P fname = filename;
 
     if (!isOK()) return false;
 
@@ -486,16 +486,18 @@
 
   #if HAS_SD_RESTART
 
+    const char restart_file_name[8] = "restart";
+
     void CardReader::open_restart_file(const bool read) {
 
       if (!isOK() || restart_file.isOpen()) return;
 
-      if (!restart_file.open(&root, "restart.bin", read ? O_READ : O_CREAT | O_WRITE | O_TRUNC | O_SYNC))
+      if (!restart_file.open(&root, restart_file_name, read ? O_READ : (O_CREAT | O_WRITE | O_TRUNC | O_SYNC)))
         SERIAL_SM(ER, MSG_SD_OPEN_FILE_FAIL);
-      else
+      else if (!read)
         SERIAL_MSG(MSG_SD_WRITE_TO_FILE);
 
-      SERIAL_EM("restart.bin");
+      SERIAL_EM("restart");
     }
 
     void CardReader::close_restart_file() {
@@ -504,22 +506,33 @@
     }
 
     void CardReader::delete_restart_file() {
-      if (restart_file.remove(&root, "restart.bin")) {
-        SERIAL_EM("restart.bin deleted");
-      }
-      else {
-        SERIAL_EM("Deletion restart.bin failed");
+      if (exist_restart_file()) {
+        restart_file.remove(&root, restart_file_name);
+        #if ENABLED(DEBUG_RESTART)
+          SERIAL_MSG("restart delete");
+          SERIAL_PS(exist_restart_file() ? PSTR(" failed.\n") : PSTR("d.\n"));
+        #endif
       }
     }
 
     bool CardReader::exist_restart_file() {
-      return restart_file.open(&root, "restart.bin", O_READ);
+      const bool exist = restart_file.open(&root, restart_file_name, O_READ);
+      #if ENABLED(DEBUG_RESTART)
+        SERIAL_MSG("File restart ");
+        if (!exist) SERIAL_MSG("not ");
+        SERIAL_EM("exist");
+      #endif
+      if (exist) restart_file.close();
+      return exist;
     }
 
     int16_t CardReader::save_restart_data() {
-      if (!restart_file.isOpen()) return -1;
       restart_file.seekSet(0);
-      return restart_file.write(&restart.job_info, sizeof(restart.job_info));
+      const int16_t ret = restart_file.write(&restart.job_info, sizeof(restart.job_info));
+      #if ENABLED(DEBUG_RESTART)
+        if (ret == -1) SERIAL_EM("restart write failed.");
+      #endif
+      return ret; 
     }
 
     int16_t CardReader::read_restart_data() {
@@ -530,6 +543,8 @@
 
   #if HAS_EEPROM_SD
 
+    const char eeprom_file_name[7] = "eeprom";
+
     void CardReader::open_eeprom_sd(const bool read) {
 
       if (!isOK()) mount();
@@ -538,9 +553,9 @@
 
       if (eeprom_file.isOpen()) eeprom_file.close();
 
-      if (!eeprom_file.open(&root, "eeprom.bin", read ? O_READ : (O_CREAT | O_WRITE | O_TRUNC | O_SYNC))) {
+      if (!eeprom_file.open(&root, eeprom_file_name, read ? O_READ : (O_CREAT | O_WRITE | O_TRUNC | O_SYNC))) {
         SERIAL_SM(ER, MSG_SD_OPEN_FILE_FAIL);
-        SERIAL_EM("eeprom.bin");
+        SERIAL_EM("eeprom");
       }
     }
 
@@ -617,7 +632,7 @@
       }
     }
 
-    void CardReader::unparseKeyLine(const char* key, char* value) {
+    void CardReader::unparseKeyLine(PGM_P key, char* value) {
       if (!isOK() || !settings_file.isOpen()) return;
       settings_file.writeError = false;
       settings_file.write(key);
@@ -648,7 +663,7 @@
       }
     }
 
-    static const char *cfgSD_KEY[] = { // Keep this in lexicographical order for better search performance(O(Nlog2(N)) insted of O(N*N)) (if you don't keep this sorted, the algorithm for find the key index won't work, keep attention.)
+    static PGM_P cfgSD_KEY[] = { // Keep this in lexicographical order for better search performance(O(Nlog2(N)) insted of O(N*N)) (if you don't keep this sorted, the algorithm for find the key index won't work, keep attention.)
       "CPR",  // Number of complete prints
       "FIL",  // Filament Usage
       "NPR",  // Number of prints
@@ -660,7 +675,7 @@
     };
 
     void CardReader::StoreSettings() {
-      if (!IS_SD_INSERTED || isSDprinting() || print_job_counter.isRunning()) return;
+      if (!IS_SD_INSERTED() || isSDprinting() || print_job_counter.isRunning()) return;
 
       if (settings_file.open(&root, "INFO.cfg", O_CREAT | O_APPEND | O_WRITE | O_TRUNC)) {
         char buff[CFG_SD_MAX_VALUE_LEN];
@@ -687,7 +702,7 @@
     }
 
     void CardReader::RetrieveSettings(bool addValue) {
-      if (!IS_SD_INSERTED || isSDprinting() || !isOK()) return;
+      if (!IS_SD_INSERTED() || isSDprinting() || !isOK()) return;
 
       char key[CFG_SD_MAX_KEY_LEN], value[CFG_SD_MAX_VALUE_LEN];
       int k_idx;
@@ -981,7 +996,7 @@
    *   LS_Count       - Add +1 to nrFiles for every file within the parent
    *   LS_GetFilename - Get the filename of the file indexed by nrFile_index
    */
-  void CardReader::lsDive(SdBaseFile parent, const char* const match/*=NULL*/) {
+  void CardReader::lsDive(SdBaseFile parent, PGM_P const match/*=NULL*/) {
     dir_t* p    = NULL;
     uint8_t cnt = 0;
 
@@ -1073,7 +1088,7 @@
 
   bool CardReader::findGeneratedBy(char* buf, char* genBy) {
     // Slic3r & S3D
-    const char* generatedByString = PSTR("generated by ");
+    PGM_P generatedByString = PSTR("generated by ");
     char* pos = strstr_P(buf, generatedByString);
     if (pos) {
       pos += strlen_P(generatedByString);
@@ -1092,7 +1107,7 @@
     }
 
     // CURA
-    const char* slicedAtString = PSTR(";Sliced at: ");
+    PGM_P slicedAtString = PSTR(";Sliced at: ");
     pos = strstr_P(buf, slicedAtString);
     if (pos) {
       strcpy_P(genBy, PSTR("Cura"));
@@ -1107,7 +1122,7 @@
   bool CardReader::findFirstLayerHeight(char* buf, float &firstlayerHeight) {
     // SLIC3R
     firstlayerHeight = 0;
-    const char* layerHeightSlic3r = PSTR("; first_layer_height ");
+    PGM_P layerHeightSlic3r = PSTR("; first_layer_height ");
     char *pos = strstr_P(buf, layerHeightSlic3r);
     if (pos) {
       pos += strlen_P(layerHeightSlic3r);
@@ -1119,7 +1134,7 @@
     }
 
     // CURA
-    const char* layerHeightCura = PSTR("First layer height: ");
+    PGM_P layerHeightCura = PSTR("First layer height: ");
     pos = strstr_P(buf, layerHeightCura);
     if (pos) {
       pos += strlen_P(layerHeightCura);
@@ -1136,7 +1151,7 @@
   bool CardReader::findLayerHeight(char* buf, float &layerHeight) {
     // SLIC3R
     layerHeight = 0;
-    const char* layerHeightSlic3r = PSTR("; layer_height ");
+    PGM_P layerHeightSlic3r = PSTR("; layer_height ");
     char *pos = strstr_P(buf, layerHeightSlic3r);
     if (pos) {
       pos += strlen_P(layerHeightSlic3r);
@@ -1148,7 +1163,7 @@
     }
 
     // CURA
-    const char* layerHeightCura = PSTR("Layer height: ");
+    PGM_P layerHeightCura = PSTR("Layer height: ");
     pos = strstr_P(buf, layerHeightCura);
     if (pos) {
       pos += strlen_P(layerHeightCura);
@@ -1163,8 +1178,8 @@
   }
 
   bool CardReader::findFilamentNeed(char* buf, float &filament) {
-    const char* filamentUsedStr = PSTR("filament used");
-    const char* pos = strstr_P(buf, filamentUsedStr);
+    PGM_P filamentUsedStr = PSTR("filament used");
+    PGM_P pos = strstr_P(buf, filamentUsedStr);
     filament = 0;
     if (pos != NULL) {
       pos += strlen_P(filamentUsedStr);

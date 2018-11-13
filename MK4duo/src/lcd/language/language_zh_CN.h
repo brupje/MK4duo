@@ -189,7 +189,7 @@
 #define MSG_PID_D                           _UxGT("PID-D")  //"PID-D"
 #define MSG_PID_C                           _UxGT("PID-C")  //"PID-C"
 #define MSG_SELECT                          _UxGT("选择")  //"Select"
-#define MSG_ACC                             _UxGT("加速度")  //"Accel" acceleration
+#define MSG_ACC                             _UxGT("加速度")  //"Accel" data.acceleration
 #define MSG_JERK                            _UxGT("抖动速率")  // "Jerk"
 #if IS_KINEMATIC
   #define MSG_VA_JERK                       _UxGT("A轴抖动速率")  //"Va-jerk"
@@ -202,14 +202,14 @@
 #endif
 #define MSG_VE_JERK                         _UxGT("挤出机抖动速率")  //"Ve-jerk"
 #define MSG_VELOCITY                        _UxGT("速度")          // "Velocity"
-#define MSG_VMAX                            _UxGT("最大进料速率")  //"Vmax " max_feedrate_mm_s
-#define MSG_VMIN                            _UxGT("最小进料速率")  //"Vmin"  min_feedrate_mm_s
-#define MSG_VTRAV_MIN                       _UxGT("最小移动速率")  //"VTrav min" min_travel_feedrate_mm_s, (target) speed of the move
+#define MSG_VMAX                            _UxGT("最大进料速率")  //"Vmax " data.max_feedrate_mm_s
+#define MSG_VMIN                            _UxGT("最小进料速率")  //"Vmin"  data.min_feedrate_mm_s
+#define MSG_VTRAV_MIN                       _UxGT("最小移动速率")  //"VTrav min" data.min_travel_feedrate_mm_s, (target) speed of the move
 #define MSG_ACCELERATION                    _UxGT("加速度")       // "Acceleration"
-#define MSG_AMAX                            _UxGT("最大打印加速度")  //"Amax " max_acceleration_mm_per_s2, acceleration in units/s^2 for print moves
-#define MSG_A_RETRACT                       _UxGT("收进加速度")  //"A-retract" retract_acceleration, E acceleration in mm/s^2 for retracts
-#define MSG_A_TRAVEL                        _UxGT("非打印移动加速度")  //"A-travel" travel_acceleration, X, Y, Z acceleration in mm/s^2 for travel (non printing) moves
-#define MSG_STEPS_PER_MM                    _UxGT("轴步数/mm")  //"Steps/mm" axis_steps_per_mm, axis steps-per-unit G92
+#define MSG_AMAX                            _UxGT("最大打印加速度")  //"Amax " data.max_acceleration_mm_per_s2, data.acceleration in units/s^2 for print moves
+#define MSG_A_RETRACT                       _UxGT("收进加速度")  //"A-retract" data.retract_acceleration, E data.acceleration in mm/s^2 for retracts
+#define MSG_A_TRAVEL                        _UxGT("非打印移动加速度")  //"A-travel" data.travel_acceleration, X, Y, Z data.acceleration in mm/s^2 for travel (non printing) moves
+#define MSG_STEPS_PER_MM                    _UxGT("轴步数/mm")  //"Steps/mm" data.axis_steps_per_mm, axis steps-per-unit G92
 #if IS_KINEMATIC
   #define MSG_ASTEPS                        _UxGT("A轴步数/mm")  //"Asteps/mm"
   #define MSG_BSTEPS                        _UxGT("B轴步数/mm")  //"Bsteps/mm"
@@ -254,13 +254,13 @@
 #define MSG_NO_MOVE                         _UxGT("无移动")  //"No move."
 #define MSG_KILLED                          _UxGT("已杀掉")  //"KILLED. "
 #define MSG_STOPPED                         _UxGT("已停止")  //"STOPPED. "
-#define MSG_CONTROL_RETRACT                 _UxGT("回抽长度mm")  //"Retract mm" retract_length, retract length (positive mm)
-#define MSG_CONTROL_RETRACT_SWAP            _UxGT("换手回抽长度mm")  //"Swap Re.mm" swap_retract_length, swap retract length (positive mm), for extruder change
-#define MSG_CONTROL_RETRACTF                _UxGT("回抽速率mm/s")  //"Retract  V" retract_feedrate_mm_s, feedrate for retracting (mm/s)
-#define MSG_CONTROL_RETRACT_ZLIFT           _UxGT("Hop mm")  //"Hop mm" retract_zlift, retract Z-lift
-#define MSG_CONTROL_RETRACT_RECOVER         _UxGT("回抽恢复长度mm")  //"UnRet +mm" retract_recover_length, additional recover length (mm, added to retract length when recovering)
-#define MSG_CONTROL_RETRACT_RECOVER_SWAP    _UxGT("换手回抽恢复长度mm")  //"S UnRet+mm" swap_retract_recover_length, additional swap recover length (mm, added to retract length when recovering from extruder change)
-#define MSG_CONTROL_RETRACT_RECOVERF        _UxGT("回抽恢复后进料速率mm/s")  //"UnRet  V" retract_recover_feedrate_mm_s, feedrate for recovering from retraction (mm/s)
+#define MSG_CONTROL_RETRACT                 _UxGT("回抽长度mm")  //"Retract mm" data.retract_length, retract length (positive mm)
+#define MSG_CONTROL_RETRACT_SWAP            _UxGT("换手回抽长度mm")  //"Swap Re.mm" data.swap_retract_length, swap retract length (positive mm), for extruder change
+#define MSG_CONTROL_RETRACTF                _UxGT("回抽速率mm/s")  //"Retract  V" data.retract_feedrate_mm_s, feedrate for retracting (mm/s)
+#define MSG_CONTROL_RETRACT_ZLIFT           _UxGT("Hop mm")  //"Hop mm" data.retract_zlift, retract Z-lift
+#define MSG_CONTROL_RETRACT_RECOVER         _UxGT("回抽恢复长度mm")  //"UnRet +mm" data.retract_recover_length, additional recover length (mm, added to retract length when recovering)
+#define MSG_CONTROL_RETRACT_RECOVER_SWAP    _UxGT("换手回抽恢复长度mm")  //"S UnRet+mm" data.swap_retract_recover_length, additional swap recover length (mm, added to retract length when recovering from extruder change)
+#define MSG_CONTROL_RETRACT_RECOVERF        _UxGT("回抽恢复后进料速率mm/s")  //"UnRet  V" data.retract_recover_feedrate_mm_s, feedrate for recovering from retraction (mm/s)
 #define MSG_CONTROL_RETRACT_RECOVER_SWAPF   _UxGT("S UnRet V") // "S UnRet V"
 #define MSG_AUTORETRACT                     _UxGT("自动抽回")  //"AutoRetr." autoretract_enabled,
 #define MSG_FILAMENTCHANGE                  _UxGT("更换丝料")  //"Change filament"
@@ -268,7 +268,7 @@
 #define MSG_FILAMENTUNLOAD                  _UxGT("卸载丝料") // "Unload filament"
 #define MSG_FILAMENTUNLOAD_ALL              _UxGT("卸载全部") // "Unload All"
 #define MSG_INIT_SDCARD                     _UxGT("初始化存储卡")  //"Init. SD card"
-#define MSG_CNG_SDCARD                      _UxGT("更换存储卡")  //"Change SD card"
+#define MSG_CHANGE_SDCARD                   _UxGT("更换存储卡")  //"Change SD card"
 #define MSG_ZPROBE_OUT                      _UxGT("Z探针在热床之外")  //"Z probe out. bed" Z probe is not within the physical limits
 #define MSG_SKEW_FACTOR                     _UxGT("偏斜因数") // "Skew Factor"
 #define MSG_BLTOUCH                         _UxGT("BLTouch")     // "BLTouch"

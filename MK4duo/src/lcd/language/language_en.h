@@ -118,7 +118,7 @@
   #define MSG_SET_ORIGIN                      _UxGT("Set origin")
 #endif
 #ifndef MSG_PREHEAT_1
-  #define MSG_PREHEAT_1                       _UxGT("Preheat PLA")
+  #define MSG_PREHEAT_1                       _UxGT("Preheat " PREHEAT_1_LABEL)
 #endif
 #ifndef MSG_PREHEAT_1_N
   #define MSG_PREHEAT_1_N                     MSG_PREHEAT_1 _UxGT(" ")
@@ -136,7 +136,7 @@
   #define MSG_PREHEAT_1_SETTINGS              MSG_PREHEAT_1 _UxGT(" conf")
 #endif
 #ifndef MSG_PREHEAT_2
-  #define MSG_PREHEAT_2                       _UxGT("Preheat ABS")
+  #define MSG_PREHEAT_2                       _UxGT("Preheat " PREHEAT_2_LABEL)
 #endif
 #ifndef MSG_PREHEAT_2_N
   #define MSG_PREHEAT_2_N                     MSG_PREHEAT_2 _UxGT(" ")
@@ -154,7 +154,7 @@
   #define MSG_PREHEAT_2_SETTINGS              MSG_PREHEAT_2 _UxGT(" conf")
 #endif
 #ifndef MSG_PREHEAT_3
-  #define MSG_PREHEAT_3                       _UxGT("Preheat GUM")
+  #define MSG_PREHEAT_3                       _UxGT("Preheat " PREHEAT_3_LABEL)
 #endif
 #ifndef MSG_PREHEAT_3_N
   #define MSG_PREHEAT_3_N                     MSG_PREHEAT_3 _UxGT(" ")
@@ -231,8 +231,23 @@
 #ifndef MSG_DXC_MODE_DUPLICATE
   #define MSG_DXC_MODE_DUPLICATE              _UxGT("Duplication")
 #endif
+#ifndef MSG_DXC_MODE_SCALED_COPY
+  #define MSG_DXC_MODE_SCALED_COPY            _UxGT("Scaled copy")
+#endif
 #ifndef MSG_DXC_MODE_FULL_CTRL
   #define MSG_DXC_MODE_FULL_CTRL              _UxGT("Full control")
+#endif
+#ifndef MSG_DXC_X_OFFSET
+  #define MSG_DXC_X_OFFSET                    _UxGT("2nd nozzle X")
+#endif
+#ifndef MSG_DXC_Y_OFFSET
+  #define MSG_DXC_Y_OFFSET                    _UxGT("2nd nozzle Y")
+#endif
+#ifndef MSG_DXC_Z_OFFSET
+  #define MSG_DXC_Z_OFFSET                    _UxGT("2nd nozzle Z")
+#endif
+#ifndef MSG_DXC_SAVE_OFFSETS
+  #define MSG_DXC_SAVE_OFFSETS                _UxGT("Save Offsets")
 #endif
 #ifndef MSG_UBL_MANUAL_MESH
   #define MSG_UBL_MANUAL_MESH                 _UxGT("Manually Build Mesh")
@@ -481,6 +496,9 @@
 #endif
 #ifndef MSG_MOVE_E
   #define MSG_MOVE_E                          _UxGT("Extruder")
+#endif
+#ifndef MSG_HOTEND_TOO_COLD
+  #define MSG_HOTEND_TOO_COLD                 _UxGT("Hotend too cold")
 #endif
 #ifndef MSG_MOVE_01MM
   #define MSG_MOVE_01MM                       _UxGT("Move 0.1mm")
@@ -797,8 +815,8 @@
 #ifndef MSG_INIT_SDCARD
   #define MSG_INIT_SDCARD                     _UxGT("Init. SD card")
 #endif
-#ifndef MSG_CNG_SDCARD
-  #define MSG_CNG_SDCARD                      _UxGT("Change SD card")
+#ifndef MSG_CHANGE_SDCARD
+  #define MSG_CHANGE_SDCARD                   _UxGT("Change SD card")
 #endif
 #ifndef MSG_ZPROBE_OUT
   #define MSG_ZPROBE_OUT                      _UxGT("Z Probe past bed")
@@ -820,6 +838,12 @@
 #endif
 #ifndef MSG_BLTOUCH_STOW
   #define MSG_BLTOUCH_STOW                    _UxGT("Stow BLTouch")
+#endif
+#ifndef MSG_MANUAL_DEPLOY
+  #define MSG_MANUAL_DEPLOY                   _UxGT("Deploy Z-Probe")
+#endif
+#ifndef MSG_MANUAL_STOW
+  #define MSG_MANUAL_STOW                     _UxGT("Stow Z-Probe")
 #endif
 #ifndef MSG_HOME
   #define MSG_HOME                            _UxGT("Home") // Used as MSG_HOME " " MSG_X MSG_Y MSG_Z " " MSG_FIRST
@@ -1274,6 +1298,17 @@
 #endif
 #ifndef MSG_RFID_SPOOL_LENGHT
   #define MSG_RFID_SPOOL_LENGHT               _UxGT("Spool Lenght: ")
+#endif
+
+// Sound
+#ifndef MSG_SOUND_MODE_ON
+  #define MSG_SOUND_MODE_ON                   _UxGT("Sound           [on]")
+#endif
+#ifndef MSG_SOUND_MODE_SILENT
+  #define MSG_SOUND_MODE_SILENT               _UxGT("Sound       [silent]")
+#endif
+#ifndef MSG_SOUND_MODE_MUTE
+  #define MSG_SOUND_MODE_MUTE                 _UxGT("Sound         [mute]")
 #endif
 
 // EEPROM Allert

@@ -138,6 +138,7 @@
   #define LCD_CONTRAST_MAX 255
   #define DEFAULT_LCD_CONTRAST 100
   #define ULTIPANEL
+  #define SPEAKER
 
 #elif ENABLED(CR10_STOCKDISPLAY)
 
@@ -474,12 +475,12 @@
  */
 #if EXTRUDERS > 1
   #define XYZE_N          (3 + EXTRUDERS)
-  #define E_AXIS_N        (E_AXIS + extruder)
+  #define E_AXIS_N(E)     (E_AXIS + E)
   #define E_INDEX         (E_AXIS + tools.active_extruder)
   #define TARGET_EXTRUDER tools.target_extruder
 #elif EXTRUDERS == 1
   #define XYZE_N          XYZE
-  #define E_AXIS_N        E_AXIS
+  #define E_AXIS_N(E)     E_AXIS
   #define E_INDEX         E_AXIS
   #define TARGET_EXTRUDER 0
 #elif EXTRUDERS == 0
@@ -487,7 +488,7 @@
   #define PIDTEMP         false
   #undef FWRETRACT
   #define XYZE_N          XYZ
-  #define E_AXIS_N        0
+  #define E_AXIS_N(E)     0
   #define E_INDEX         0
   #define TARGET_EXTRUDER 0
 #endif
@@ -521,6 +522,17 @@
   #define BLTOUCH_SELFTEST 120
   #define BLTOUCH_RESET    160
 
+#endif
+
+// Label Preheat
+#ifndef PREHEAT_1_LABEL
+  #define PREHEAT_1_LABEL "PLA"
+#endif
+#ifndef PREHEAT_2_LABEL
+  #define PREHEAT_2_LABEL "ABS"
+#endif
+#ifndef PREHEAT_3_LABEL
+  #define PREHEAT_3_LABEL "GUM"
 #endif
 
 #endif /* _CONDITIONALS_PRE_H_ */

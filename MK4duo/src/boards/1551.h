@@ -144,7 +144,7 @@
 #define SERVO3_PIN                 NoPin
 
 //###MISC
-#define ORIG_PS_ON_PIN             NoPin
+#define ORIG_PS_ON_PIN             65
 #define ORIG_BEEPER_PIN            NoPin
 #define LED_PIN                    NoPin
 #define SDPOWER_PIN                NoPin
@@ -162,7 +162,7 @@
 //###UNKNOWN_PINS
 // I2C EEPROM with 32K of space
 #define EEPROM_I2C
-#define E2END 0x8000
+#define E2END 0x7FFF
 //@@@
 
 //###IF_BLOCKS

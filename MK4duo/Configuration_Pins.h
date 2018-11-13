@@ -133,9 +133,11 @@
 #define X2_MIN_PIN          NoPin
 #define Y2_MIN_PIN          NoPin
 #define Z2_MIN_PIN          NoPin
+#define Z3_MIN_PIN          NoPin
 #define X2_MAX_PIN          NoPin
 #define Y2_MAX_PIN          NoPin
 #define Z2_MAX_PIN          NoPin
+#define Z3_MAX_PIN          NoPin
 #define Z_PROBE_PIN         ORIG_Z_PROBE_PIN
 
 // HEATER pins
@@ -215,12 +217,12 @@
 #endif
 
 #if ENABLED(FILAMENT_RUNOUT_SENSOR)
-  #define FIL_RUNOUT0_PIN     NoPin
-  #define FIL_RUNOUT1_PIN     NoPin
-  #define FIL_RUNOUT2_PIN     NoPin
-  #define FIL_RUNOUT3_PIN     NoPin
-  #define FIL_RUNOUT4_PIN     NoPin
-  #define FIL_RUNOUT5_PIN     NoPin
+  #define FIL_RUNOUT_0_PIN    NoPin
+  #define FIL_RUNOUT_1_PIN    NoPin
+  #define FIL_RUNOUT_2_PIN    NoPin
+  #define FIL_RUNOUT_3_PIN    NoPin
+  #define FIL_RUNOUT_4_PIN    NoPin
+  #define FIL_RUNOUT_5_PIN    NoPin
   #define FIL_RUNOUT_DAV_PIN  NoPin
 #endif
 
