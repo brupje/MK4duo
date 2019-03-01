@@ -340,7 +340,7 @@ void HAL::Tick() {
   #endif
 
   #if FAN_COUNT > 0
-    //LOOP_FAN() fans[f].SetHardwarePwm();
+    LOOP_FAN() fans[f].SetHardwarePwm();
   #endif
 
   // Calculation cycle temp a 100ms
